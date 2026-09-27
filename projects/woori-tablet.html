@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>우리은행 AI기반 불완전판매방지 태블릿 서비스 고도화</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
+    />
+    <link rel="stylesheet" href="./project.css" />
+  </head>
+  <body>
+    <div class="layout">
+    <aside class="toc">
+      <a class="back" href="../index.html">← 이력서로 돌아가기</a>
+      <p class="toc-kicker">경력기술서</p>
+      <p class="toc-title">우리은행 불완전판매방지<br />태블릿 서비스 고도화</p>
+      <p class="toc-meta">2022.10 – 2023.01 · KT / 퓨렌스</p>
+      <nav>
+        <p class="toc-label">목차</p>
+        <a href="#arch"><span>00</span>아키텍처</a>
+        <a href="#role"><span>01</span>규모와 역할</a>
+        <a href="#flow"><span>02</span>녹취 · 화면 흐름</a>
+        <a href="#trouble"><span>03</span>트러블슈팅</a>
+        <a href="#results"><span>04</span>핵심성과</a>
+      </nav>
+    </aside>
+
+    <main class="page">
+      <p class="kicker">경력기술서 · 2022.10 – 2023.01 · KT / 퓨렌스</p>
+      <h1>우리은행 AI기반 불완전판매방지 태블릿 서비스 고도화</h1>
+      <p class="meta">백엔드 개발 및 중계망 구축 · 외부망 · 중계망 · 내부운영망</p>
+      <p class="lead">
+        외부망의 태블릿 앱에서 녹취한 음성을 중계망을 거쳐 내부운영망 녹취 서버까지 안전하게 전달하는 서비스입니다.
+        <strong>중계망 TCP Proxy를 직접 구현</strong>하고, 웹뷰 화면이 Zeus Reverse Proxy를 거쳐 내부 WAS로 렌더링되도록 연결했습니다.
+      </p>
+      <div class="chips">
+        <span>Netty</span>
+        <span>TCP Proxy</span>
+        <span>Zeus (Web Server)</span>
+        <span>Reverse Proxy</span>
+        <span>L4 / VIP</span>
+        <span>WebView</span>
+        <span>Spring</span>
+        <span>Linux</span>
+      </div>
+
+      <section id="arch">
+        <div class="num">00</div>
+        <h2>망 구간 아키텍처</h2>
+        <div class="arch">
+          <div class="arch-bar">
+            <span>외부망 → 중계망 → 내부운영망</span>
+            <span class="arch-hint">중계망 · 내부운영망 서버 1·2 이중화</span>
+          </div>
+          <div class="zones">
+            <div class="corner"></div>
+            <div class="zone-head z1">외부망</div>
+            <div class="zone-gap"></div>
+            <div class="zone-head z2">중계망</div>
+            <div class="zone-gap"></div>
+            <div class="zone-head z3">내부운영망</div>
+
+            <div class="tier">녹취<br />TCP</div>
+            <div class="zcell z1">
+              <div class="node"><b>태블릿 앱</b><span>녹취 · 암호화</span></div>
+            </div>
+            <div class="hop"><span>TCP</span></div>
+            <div class="zcell z2">
+              <div class="node vip"><b>중계 VIP</b><span>이중화</span></div>
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화">
+                <div class="node mine"><b>Proxy 1</b><span>TCP Proxy</span></div>
+                <div class="node mine"><b>Proxy 2</b><span>TCP Proxy</span></div>
+              </div>
+              <p class="cell-note">직접 구현</p>
+            </div>
+            <div class="hop"><span>TCP</span></div>
+            <div class="zcell z3">
+              <div class="node vip"><b>녹취 VIP</b><span>Hash</span></div>
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화">
+                <div class="node"><b>녹취 AP 1</b><span>수신</span></div>
+                <div class="node"><b>녹취 AP 2</b><span>수신</span></div>
+              </div>
+              <p class="cell-note">기존 솔루션 구축 환경 그대로</p>
+            </div>
+
+            <div class="tier">화면<br />HTTP</div>
+            <div class="zcell z1">
+              <div class="node"><b>앱 웹뷰</b><span>브라우저 렌더링</span></div>
+            </div>
+            <div class="hop"><span>HTTP</span></div>
+            <div class="zcell z2">
+              <div class="node"><b>Zeus</b><span>Web Server · Reverse Proxy</span></div>
+            </div>
+            <div class="hop"><span>HTTP</span></div>
+            <div class="zcell z3">
+              <div class="node vip"><b>WAS VIP</b><span>Round Robin</span></div>
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화">
+                <div class="node"><b>WAS 1</b><span>Tomcat</span></div>
+                <div class="node"><b>WAS 2</b><span>Tomcat</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="arch-foot">
+            내부운영망의 녹취 AP · WAS는
+            <a href="./woori-misselling.html">우리은행 AI 기반 불완전판매방지 솔루션 구축</a>에서 구성한 환경을 그대로 사용합니다.
+            중계망이 외부망과 내부운영망 사이를 이어 줍니다.
+          </div>
+        </div>
+      </section>
+
+      <section id="role">
+        <div class="num">01</div>
+        <h2>규모와 역할</h2>
+        <div class="stats">
+          <div class="stat"><b>3개 망 연결</b><span>외부망 · 중계망 · 내부운영망</span></div>
+          <div class="stat"><b>TCP Proxy</b><span>중계망 직접 구현</span></div>
+          <div class="stat"><b>백엔드 개발</b><span>태블릿 맞춤 대응 · 중계망 구축</span></div>
+          <div class="stat"><b>3개월</b><span>2022.10 – 2023.01</span></div>
+        </div>
+      </section>
+
+      <section id="flow">
+        <div class="num">02</div>
+        <h2>태블릿 녹취와 웹뷰 화면 흐름</h2>
+        <p class="note">녹취는 TCP로 중계망 Proxy를 거쳐 녹취 서버로, 화면은 HTTP로 Zeus를 거쳐 내부 WAS로 이어집니다.</p>
+        <div class="seq">
+          <div class="seq-head">
+            <div>태블릿 앱</div>
+            <div>중계 VIP</div>
+            <div>TCP Proxy 1·2</div>
+            <div>녹취 VIP</div>
+            <div>녹취 AP 1·2</div>
+            <div>Zeus</div>
+            <div>WAS 1·2</div>
+          </div>
+          <div class="seq-body">
+            <div class="lifelines"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+            <div class="phase">녹취 전송 (TCP)</div>
+            <div class="msg" style="grid-column: 1 / 3; --n: 2"><span>① 녹취 · 암호화 음성</span></div>
+            <div class="msg" style="grid-column: 2 / 4; --n: 2"><span>② Proxy 1·2 분산</span></div>
+            <div class="msg" style="grid-column: 3 / 5; --n: 2"><span>③ TCP 중계</span></div>
+            <div class="msg" style="grid-column: 4 / 6; --n: 2"><span>④ Hash · 같은 AP 고정</span></div>
+
+            <div class="phase">웹뷰 화면 (HTTP)</div>
+            <div class="msg" style="grid-column: 1 / 7; --n: 6"><span>⑤ 웹뷰 화면 요청</span></div>
+            <div class="msg" style="grid-column: 6 / 8; --n: 2"><span>⑥ Reverse Proxy</span></div>
+            <div class="msg rev" style="grid-column: 1 / 8; --n: 7"><span>⑦ 화면 · 정적 리소스 응답</span></div>
+          </div>
+        </div>
+        <div class="seq-notes">
+          <div class="why">
+            <b>③ TCP Proxy</b>
+            <p>외부망의 앱이 내부운영망 녹취 서버에 바로 붙지 않도록, 중계망에 <strong>TCP Proxy를 직접 구현</strong>해 연결을 이어 줬습니다.</p>
+          </div>
+          <div class="why">
+            <b>④ Hash</b>
+            <p>녹취는 한 상담의 음성이 한 파일로 이어져야 하므로, 중계망에서 녹취 서버로 갈 때도 녹취 VIP의 <code>Hash</code> 분산으로 같은 녹취 AP에 고정합니다.</p>
+          </div>
+          <div class="why">
+            <b>⑤ ⑦ 웹뷰</b>
+            <p>앱은 웹뷰라 화면을 직접 그리지 않고, Zeus <code>Reverse Proxy</code>를 거쳐 내부 WAS가 렌더링한 화면을 받아 표시합니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="trouble">
+        <div class="num">03</div>
+        <h2>트러블슈팅</h2>
+
+        <article class="case">
+          <h3><span>01</span>Zeus Reverse Proxy 웹뷰 렌더링 지연</h3>
+          <div class="ps">
+            <div class="ps-row"><b>문제</b><p><code>Reverse Proxy</code>를 거치면서 웹뷰 화면의 <strong>브라우저 캐시 · 리소스 로딩</strong>이 매우 느려 렌더링이 지연됐습니다.</p></div>
+            <div class="ps-row"><b>원인 파악</b><p>실제 태블릿 웹뷰로 재현하고, Zeus 로그로 리소스마다 몇 ms에 내려받아지는지 확인했습니다. 정적 리소스가 캐시되지 않고 요청마다 내부 WAS까지 다시 받아오고 있었습니다.</p></div>
+            <div class="ps-row"><b>해결</b><p>Zeus 설정을 조정했습니다. <strong>정적 리소스(JS · CSS · 이미지)에 캐시 헤더(<code>Cache-Control</code> · <code>Expires</code>)를 적용</strong>하고, 응답 압축과 <code>Keep-Alive</code> 연결 재사용을 켜서 반복 다운로드와 연결 비용을 줄였습니다.</p></div>
+            <div class="ps-row result"><b>결과</b><p>리소스 재다운로드가 사라져 웹뷰 화면 렌더링 지연을 해소했습니다.</p></div>
+          </div>
+        </article>
+
+        <article class="case">
+          <h3><span>02</span>TCP Proxy 연결 끊김 — 녹취 단절 방지</h3>
+          <div class="ps">
+            <div class="ps-row"><b>문제</b><p>직접 구현한 TCP Proxy에서 <code>idle timeout</code> 등으로 연결이 비교적 자주 끊겨 녹취가 중단될 위험이 있었습니다.</p></div>
+            <div class="ps-row"><b>원인 파악</b><p><strong>앱 → Proxy, Proxy → 녹취 서버 양방향으로 로그</strong>를 남겨 비교하고, <code>timeout</code> 처리가 되지 않은 구간을 찾았습니다.</p></div>
+            <div class="ps-row"><b>해결</b><p><code>timeout</code> 미처리 구간을 보완하고, 연결이 끊겼을 때를 대비한 폴백 전략을 구축했습니다.</p></div>
+            <div class="ps-row result"><b>결과</b><p>연결이 끊기는 상황에서도 녹취가 끊기지 않도록 개선했습니다.</p></div>
+          </div>
+        </article>
+      </section>
+
+      <section id="results">
+        <div class="num">04</div>
+        <h2>핵심성과</h2>
+        <div class="results">
+          <article class="result-card">
+            <em>안정성</em>
+            <b>녹취 끊김 없는 TCP 중계</b>
+            <p>양방향 로그로 <code>timeout</code> 미처리 구간을 찾아 보완하고 폴백 전략을 더해, 연결이 끊겨도 녹취가 이어지게 만들었습니다.</p>
+          </article>
+          <article class="result-card">
+            <em>성능</em>
+            <b>웹뷰 렌더링 지연 해소</b>
+            <p>Zeus 로그로 리소스별 다운로드 시간을 측정하고 캐시 · 압축 설정을 조정해, 리소스 재다운로드를 없앴습니다.</p>
+          </article>
+          <article class="result-card">
+            <em>구축</em>
+            <b>외부망 태블릿 → 내부망 녹취 연결</b>
+            <p>중계망 TCP Proxy를 직접 구현해, 기존 녹취 인프라를 그대로 쓰면서 태블릿 녹취를 받을 수 있게 했습니다.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+    </div>
+    <script>
+      const links = [...document.querySelectorAll(".toc nav a")];
+      const sections = links.map((a) => document.querySelector(a.getAttribute("href")));
+      let lockUntil = 0;
+      const mark = (id) =>
+        links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === `#${id}`));
+      const setActive = () => {
+        if (Date.now() < lockUntil) return;
+        const y = window.scrollY + 120;
+        let current = sections[0];
+        for (const s of sections) if (s.getBoundingClientRect().top + window.scrollY <= y) current = s;
+        mark(current.id);
+      };
+      links.forEach((a) =>
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = document.querySelector(a.getAttribute("href"));
+          mark(target.id);
+          lockUntil = Date.now() + 900;
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          history.replaceState(null, "", a.getAttribute("href"));
+        })
+      );
+      window.addEventListener("scroll", setActive, { passive: true });
+      setActive();
+    </script>
+  </body>
+</html>

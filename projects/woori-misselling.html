@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>우리은행 AI 기반 불완전판매방지 솔루션 구축</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
+    />
+    <link rel="stylesheet" href="./project.css" />
+  </head>
+  <body>
+    <div class="layout">
+    <aside class="toc">
+      <a class="back" href="../index.html">← 이력서로 돌아가기</a>
+      <p class="toc-kicker">경력기술서</p>
+      <p class="toc-title">우리은행 AI 기반<br />불완전판매방지 솔루션</p>
+      <p class="toc-meta">2021.10 – 2022.10 · KT / 퓨렌스</p>
+      <nav>
+        <p class="toc-label">목차</p>
+        <a href="#arch"><span>00</span>아키텍처</a>
+        <a href="#role"><span>01</span>규모와 역할</a>
+        <a href="#realtime"><span>02</span>실시간 흐름</a>
+        <a href="#batch"><span>03</span>EAI 배치</a>
+        <a href="#deploy"><span>04</span>배포</a>
+        <a href="#trouble"><span>05</span>트러블슈팅</a>
+        <a href="#results"><span>06</span>핵심성과</a>
+      </nav>
+    </aside>
+
+    <main class="page">
+      <p class="kicker">경력기술서 · 2021.10 – 2022.10 · KT / 퓨렌스</p>
+      <h1>우리은행 AI 기반 불완전판매방지 솔루션 구축</h1>
+      <p class="meta">풀스택 개발 및 사내 업무망 연동 · 증권망 녹취·업무 서버</p>
+      <p class="lead">
+        우리은행 전 지점의 상담 녹취를 수집해 STT·TA 결과를 상담 화면에 실시간으로 보여 주고, 불완전판매 점검까지 이어지는 솔루션입니다.
+        메인 개발자로 <strong>녹취 AP, WAS, 업무 화면, 연동 배치, 은행 배포 파이프라인</strong>을 개발했습니다.
+      </p>
+      <div class="chips">
+        <span>Spring (MyBatis)</span>
+        <span>Tomcat</span>
+        <span>JSP · jQuery</span>
+        <span>PostgreSQL</span>
+        <span>Kafka</span>
+        <span>WebSocket</span>
+        <span>TCP Socket</span>
+        <span>SEED</span>
+        <span>AOP</span>
+        <span>Jenkins · PCMS</span>
+        <span>Linux · Shell</span>
+      </div>
+
+      <section id="arch">
+        <div class="num">00</div>
+        <h2>증권망 아키텍처</h2>
+        <div class="arch">
+          <div class="arch-bar">
+            <span>증권망 · 서버 1·2 이중화</span>
+            <span class="arch-hint">모든 서버군 앞단 L4 VIP</span>
+          </div>
+          <div class="tiers">
+            <div class="corner"></div>
+            <div class="flow-head">상담 화면</div>
+            <div class="flow-head">녹취</div>
+            <div class="flow-head">실시간 분석</div>
+
+            <div class="tier">Client</div>
+            <div class="cell">
+              <div class="node"><b>Browser</b><span>업무 · STT 자막 · TA 결과</span></div>
+            </div>
+            <div class="cell">
+              <div class="node"><b>REC Agent</b><span>단말 녹취</span></div>
+            </div>
+            <div class="cell">
+              <div class="node"><b>STT · TA</b><span>분석 결과 메시지</span></div>
+            </div>
+
+            <div class="tier">L4 VIP</div>
+            <div class="cell"><div class="wire"><span>HTTP</span></div><div class="node vip"><b>VIP</b><span>Round Robin</span></div></div>
+            <div class="cell"><div class="wire"><span>UDP</span></div><div class="node vip"><b>VIP</b><span>Hash</span></div></div>
+            <div class="cell"><div class="wire"><span>Kafka</span></div><div class="node vip"><b>VIP</b><span>Kafka</span></div></div>
+
+            <div class="tier">Server</div>
+            <div class="cell">
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화"><div class="node"><b>WAS 1</b><span>Tomcat</span></div><div class="node"><b>WAS 2</b><span>Tomcat</span></div></div>
+            </div>
+            <div class="cell">
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화"><div class="node"><b>녹취 AP 1</b><span>수신</span></div><div class="node"><b>녹취 AP 2</b><span>수신</span></div></div>
+            </div>
+            <div class="cell">
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화"><div class="node"><b>Kafka 1</b><span>Broker</span></div><div class="node"><b>Kafka 2</b><span>Broker</span></div></div>
+            </div>
+
+            <div class="tier">Data</div>
+            <div class="cell">
+              <div class="wire"><span>DB VIP → Master</span></div>
+              <div class="pair" data-link="복제"><div class="node"><b>PostgreSQL 1</b><span>Master · 쓰기</span></div><div class="node"><b>PostgreSQL 2</b><span>Slave · 복제</span></div></div>
+              <p class="cell-note">Master 주기 백업</p>
+            </div>
+            <div class="cell">
+              <div class="wire"></div>
+              <div class="node"><b>NAS 스토리지</b><span>녹취 파일 · 암호화 저장</span></div>
+            </div>
+            <div class="cell">
+              <div class="wire both"><span>메타데이터 · 리더 선출</span></div>
+              <div class="node zk"><b>ZooKeeper</b><span>Kafka 클러스터 코디네이션</span></div>
+              <ul class="zk-roles">
+                <li>브로커 1·2 등록 · 생존 확인</li>
+                <li>컨트롤러 · 파티션 리더 선출</li>
+                <li>토픽 · 파티션 설정 보관</li>
+              </ul>
+            </div>
+          </div>
+          <div class="live">
+            <span class="live-label">실시간 경로</span>
+            <span class="live-flow">
+              <b>Kafka 1·2</b><i>STT · TA 즉시 수신</i><b>WAS 1·2</b><i>WebSocket push</i><b>Browser</b>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section id="role">
+        <div class="num">01</div>
+        <h2>규모와 역할</h2>
+        <div class="stats">
+          <div class="stat"><b>우리은행 전 지점</b><span>서비스 범위</span></div>
+          <div class="stat"><b>일 1,500건</b><span>녹취 파일 (MP3 기준)</span></div>
+          <div class="stat"><b>메인 개발</b><span>녹취 AP · WAS · 화면 · 배치</span></div>
+          <div class="stat"><b>12개월</b><span>2021.10 – 2022.10</span></div>
+        </div>
+      </section>
+
+      <section id="realtime">
+        <div class="num">02</div>
+        <h2>녹취 음성에서 상담 화면 STT까지</h2>
+        <p class="note">음성 수집, STT 전달, 화면 표시, 녹취 저장, 청취까지 하나의 흐름으로 개발했습니다.</p>
+        <div class="seq">
+          <div class="seq-head">
+            <div>REC Agent</div>
+            <div>녹취 AP</div>
+            <div>NAS</div>
+            <div>STT · TA</div>
+            <div>Kafka 1·2</div>
+            <div>WAS 1·2</div>
+            <div>Browser</div>
+          </div>
+          <div class="seq-body">
+            <div class="lifelines"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+            <div class="phase">실시간 STT · TA</div>
+            <div class="msg" style="grid-column: 1 / 3; --n: 2"><span>① UDP 음성 · L4 Hash</span></div>
+            <div class="msg" style="grid-column: 2 / 5; --n: 3"><span>② TCP 소켓 · 청크 단위 음성</span></div>
+            <div class="msg" style="grid-column: 4 / 6; --n: 2"><span>③ STT · TA 결과 메시지</span></div>
+            <div class="msg" style="grid-column: 5 / 7; --n: 2"><span>④ 즉시 수신 · 채널 ID 필터</span></div>
+            <div class="msg ws" style="grid-column: 6 / 8; --n: 2"><span>⑤ WebSocket push</span></div>
+
+            <div class="phase">녹취 저장</div>
+            <div class="msg" style="grid-column: 2 / 4; --n: 2"><span>⑥ MP3 · SEED 암호화</span></div>
+
+            <div class="phase">녹취 청취</div>
+            <div class="msg rev" style="grid-column: 6 / 8; --n: 2"><span>⑦ 청취 요청</span></div>
+            <div class="msg rev" style="grid-column: 3 / 7; --n: 4"><span>⑧ 암호화 파일 조회</span></div>
+            <div class="msg ws" style="grid-column: 6 / 8; --n: 2"><span>⑨ SEED 복호화 스트리밍</span></div>
+          </div>
+        </div>
+        <div class="seq-notes">
+          <div class="why">
+            <b>② 청크 전송</b>
+            <p>
+              STT 엔진이 한 번에 받을 수 있는 음성 데이터 길이가 정해져 있고, 발화 인식을 위해서도 적당한 크기로 잘라 보내야 합니다.
+              그래서 <strong>STT 엔진 인터페이스 정의서의 규격에 맞춰 음성을 청크 단위로 잘라</strong> <code>TCP Socket</code>으로 실시간 전달했습니다.
+            </p>
+          </div>
+          <div class="why">
+            <b>④ WAS 이중화</b>
+            <p>
+              메시지를 받는 시점에는 브라우저가 WAS 1·2 중 어디에 붙어 있는지 모릅니다.
+              그래서 Kafka 메시지에 <strong><code>채널 ID</code></strong>를 담고, WAS 1·2가 같은 <code>Topic</code>을 구독하도록 했습니다.
+              <strong>메시지의 채널 ID가 자기 WebSocket 세션에 있으면 해당 클라이언트에 push하고, 없으면 버리도록</strong> 설계했습니다.
+            </p>
+          </div>
+          <div class="why">
+            <b>⑥ ⑨ 암호화</b>
+            <p>녹취 파일은 <code>SEED</code>로 암호화해 NAS에 두고, 청취할 때만 WAS에서 복호화해 스트리밍합니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="batch">
+        <div class="num">03</div>
+        <h2>EAI 조직 · 인사정보 연동 배치</h2>
+        <p class="note">
+          <strong>우리은행 전 직원</strong>의 조직 · 인사정보를 매일 EAI 파일로 받아 솔루션 DB에 반영하는 배치를 개발했습니다.
+          지점 · 부서 이동이나 입 · 퇴사가 다음 날 솔루션 사용자 정보에 그대로 반영됩니다.
+        </p>
+        <div class="timeline">
+          <div class="tl-item">
+            <div class="tl-dot blue"></div>
+            <div class="tl-phase blue">Step 01 / 매일 수신</div>
+            <div class="tl-title">EAI 조직 · 인사 파일 수신</div>
+            <div class="tl-desc">배치 스케줄에 따라 우리은행 전 직원의 조직 · 인사정보 파일을 <code>EAI</code>로 매일 수신합니다.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot violet"></div>
+            <div class="tl-phase violet">Step 02 / 파싱</div>
+            <div class="tl-title">파일 파싱</div>
+            <div class="tl-desc">수신한 파일을 조직 정보와 인사 정보로 파싱해 솔루션 DB 구조에 맞게 변환합니다.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot green"></div>
+            <div class="tl-phase green">Step 03 / DB 반영</div>
+            <div class="tl-title">조직 · 사용자 정보 갱신</div>
+            <div class="tl-desc">변환한 데이터를 솔루션 DB에 반영해 지점 · 부서 이동과 입 · 퇴사가 사용자 정보에 적용됩니다.</div>
+          </div>
+          <div class="tl-item fail">
+            <div class="tl-dot red"></div>
+            <div class="tl-phase red">실패 시 / 장애 통보</div>
+            <div class="tl-title">은행 관제 장애 문자 → 담당자 전달</div>
+            <div class="tl-desc">배치가 실패하면 은행 관제에서 장애 문자가 발송되고, 이를 담당자에게 전달해 대응합니다.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="deploy">
+        <div class="num">04</div>
+        <h2>은행 배포 절차에 맞춘 파이프라인</h2>
+        <p>은행 배포 절차(<code>PCMS</code>)에 맞춰 서버별 배포 쉘스크립트와 파이프라인을 구성하고, 테스트 증적을 작성했습니다.</p>
+        <div class="timeline">
+          <div class="tl-item mine">
+            <div class="tl-dot blue"></div>
+            <div class="tl-phase blue">Step 01 / 검증 · 담당</div>
+            <div class="tl-title">테스트 증적 작성</div>
+            <div class="tl-desc">테스트 시나리오를 만들고, 화면 단위 · 로그 단위로 증적을 작성합니다.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-phase">Step 02 / 검증</div>
+            <div class="tl-title">테스트망 3자 테스트</div>
+            <div class="tl-desc">테스트망에서 제3자 테스트를 진행합니다.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-phase">Step 03 / 승인</div>
+            <div class="tl-title">배포 승인</div>
+            <div class="tl-desc">테스트 결과와 증적을 바탕으로 배포 승인을 받습니다.</div>
+          </div>
+          <div class="tl-item mine">
+            <div class="tl-dot blue"></div>
+            <div class="tl-phase blue">Step 04 / 실행 · 담당</div>
+            <div class="tl-title">PCMS 서버별 쉘스크립트 호출</div>
+            <div class="tl-desc"><code>PCMS</code>에 등록된 서버별로, 각 서버에 구성해 둔 배포 쉘스크립트를 호출합니다.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-phase">Step 05 / 반영</div>
+            <div class="tl-title">반영 · 알림</div>
+            <div class="tl-desc">서버에 반영되면 결과가 알림으로 통보됩니다.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot green"></div>
+            <div class="tl-phase green">Step 06 / 완료</div>
+            <div class="tl-title">최종 승인</div>
+            <div class="tl-desc">최종 승인으로 배포를 마무리합니다.</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="trouble">
+        <div class="num">05</div>
+        <h2>트러블슈팅</h2>
+
+        <article class="case">
+          <h3><span>01</span>은행 CS 인터페이스 메타데이터 오류 추적</h3>
+          <div class="ps">
+            <div class="ps-row"><b>문제</b><p>은행 CS 업무 프로그램이 녹취 화면을 띄울 때 상담 메타데이터를 함께 전송하는데, <strong>인코딩 깨짐과 전문 길이 불일치</strong>가 간혹 발생했습니다.</p></div>
+            <div class="ps-row"><b>어려움</b><p>원인이 CS 쪽인지 우리 쪽인지 로그로 가려야 했지만, 동시 접속자가 수십 명이라 로그가 섞여 해당 요청을 찾기 어려웠습니다.</p></div>
+            <div class="ps-row"><b>해결</b><p>로그 포맷을 개선하고, <strong><code>AOP</code>로 인터페이스 수신 구간에서 개발자에게 필요한 로그를 분류</strong>해 남기도록 바꿨습니다. <code>grep</code>과 쉘스크립트로 바로 조회할 수 있게 했습니다.</p></div>
+            <div class="ps-row result"><b>결과</b><p>원인 구분이 쉬워졌고, 비중이 더 컸던 은행 CS 측 문제는 로그를 근거로 수정 요청하고 우리 쪽 문제는 직접 수정했습니다.</p></div>
+          </div>
+        </article>
+
+        <article class="case">
+          <h3><span>02</span>운영 서버 OOM 개선</h3>
+          <div class="ps">
+            <div class="ps-row"><b>문제</b><p>운영 중 메모리가 계속 늘어 <code>OOM</code>이 발생했습니다.</p></div>
+            <div class="ps-row"><b>원인</b><p>참조가 해제되지 않고 계속 사용 중으로 남아 있는 객체와 변수가 누적되었습니다.</p></div>
+            <div class="ps-row"><b>해결</b><p>디버깅으로 <strong>스레드별 점검</strong>을 진행해 해제되지 않는 객체·변수를 찾아 정리했습니다.</p></div>
+            <div class="ps-row result"><b>결과</b><p>매달 정기점검 주기까지 <code>OOM</code> 없이 운영되도록 개선했습니다.</p></div>
+          </div>
+        </article>
+      </section>
+
+      <section id="results">
+        <div class="num">06</div>
+        <h2>핵심성과</h2>
+        <div class="results">
+          <article class="result-card">
+            <em>안정성</em>
+            <b>정기점검 주기까지 OOM 0건</b>
+            <p>참조가 해제되지 않은 객체·변수를 스레드별로 추적해 정리하고, 매달 정기점검까지 <code>OOM</code> 없이 운영되도록 개선했습니다.</p>
+          </article>
+          <article class="result-card">
+            <em>운영</em>
+            <b>grep · 쉘스크립트로 바로 찾는 로그</b>
+            <p>로그 포맷 개선과 <code>AOP</code> 분류로, 동시 접속 수십 명 환경에서도 오류 원인을 로그에서 바로 조회할 수 있게 바꿨습니다.</p>
+          </article>
+          <article class="result-card">
+            <em>서비스</em>
+            <b>전 지점 실시간 STT · TA</b>
+            <p>우리은행 전 지점 상담에서 녹취 음성을 STT 자막과 TA 결과로 바꿔, 상담 중 화면에 바로 보여 주는 흐름을 구축했습니다.</p>
+          </article>
+        </div>
+      </section>
+    </main>
+    </div>
+    <script>
+      const links = [...document.querySelectorAll(".toc nav a")];
+      const sections = links.map((a) => document.querySelector(a.getAttribute("href")));
+      let lockUntil = 0;
+      const mark = (id) =>
+        links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === `#${id}`));
+      const setActive = () => {
+        if (Date.now() < lockUntil) return;
+        const y = window.scrollY + 120;
+        let current = sections[0];
+        for (const s of sections) if (s.getBoundingClientRect().top + window.scrollY <= y) current = s;
+        mark(current.id);
+      };
+      links.forEach((a) =>
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = document.querySelector(a.getAttribute("href"));
+          mark(target.id);
+          lockUntil = Date.now() + 900;
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          history.replaceState(null, "", a.getAttribute("href"));
+        })
+      );
+      window.addEventListener("scroll", setActive, { passive: true });
+      setActive();
+    </script>
+  </body>
+</html>
