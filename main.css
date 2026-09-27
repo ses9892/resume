@@ -225,6 +225,12 @@ h1 {
   margin-top: 2.5rem;
 }
 
+.intro strong,
+.project li strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .intro {
   max-width: 62rem;
   color: var(--sub);
@@ -336,7 +342,79 @@ h1 {
   opacity: 0.75;
 }
 
+.cases {
+  counter-reset: case;
+  border-top: 1px solid var(--line);
+}
+
+.case {
+  counter-increment: case;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.case-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.75rem;
+  margin-bottom: 0.7rem;
+}
+
+.case-head h4 {
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.case-head h4::before {
+  content: counter(case, decimal-leading-zero);
+  margin-right: 0.5rem;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.case-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: auto auto;
+  grid-auto-flow: column;
+  row-gap: 0.4rem;
+}
+
+.case-grid p {
+  display: grid;
+  grid-template-columns: 2.6rem 1fr;
+  color: var(--sub);
+  font-size: 0.92rem;
+}
+
+.case-grid p:nth-child(n + 3) {
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--line);
+}
+
+.case-grid p:nth-child(-n + 2) {
+  padding-right: 1.5rem;
+}
+
+.step {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.case-grid p:nth-child(n + 3) .step {
+  color: var(--accent);
+}
+
+.case-grid .result {
+  color: var(--text);
+  font-weight: 600;
+}
+
 @media (max-width: 1100px) {
+
   .project {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -365,6 +443,18 @@ h1 {
   .content {
     padding: 1.75rem 1.25rem 2.5rem;
   }
+
+  .case-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-flow: row;
+  }
+
+  .case-grid p:nth-child(n + 3),
+  .case-grid p:nth-child(-n + 2) {
+    padding: 0;
+    border-left: 0;
+  }
 }
 
 @page {
@@ -375,7 +465,7 @@ h1 {
 @media print {
   html,
   body {
-    font-size: 7.9px;
+    font-size: 12px;
   }
 
   body {
@@ -389,35 +479,86 @@ h1 {
   }
 
   .layout {
-    grid-template-columns: 25rem minmax(0, 1fr);
+    display: block;
     min-height: 0;
   }
 
   .sidebar {
     position: static;
+    display: grid;
+    grid-template-columns: 8.5rem 1.15fr 1.2fr 1fr;
+    grid-template-rows: auto auto auto 1fr auto;
+    grid-template-areas:
+      "photo eyebrow skills edu"
+      "photo name skills edu"
+      "photo headline skills edu"
+      "photo contact skills edu"
+      "photo contact skills cert";
+    column-gap: 2.25rem;
     height: auto;
     overflow: visible;
-    padding: 0 1.75rem 0 0;
+    padding: 0 0 1.5rem;
     background: none;
-    border-right: 1px solid var(--line);
-    border-bottom: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
   }
 
   .photo {
+    grid-area: photo;
     width: 8.5rem;
     height: 11rem;
+    margin: 0;
+  }
+
+  .eyebrow {
+    grid-area: eyebrow;
+  }
+
+  .sidebar h1 {
+    grid-area: name;
+  }
+
+  .headline {
+    grid-area: headline;
   }
 
   .side-block {
-    margin-top: 2.25rem;
+    margin-top: 0;
+  }
+
+  .side-block:nth-of-type(1) {
+    grid-area: contact;
+    margin-top: 1rem;
+  }
+
+  .side-block:nth-of-type(1) h2 {
+    display: none;
+  }
+
+  .side-block:nth-of-type(2) {
+    grid-area: skills;
+  }
+
+  .side-block:nth-of-type(3) {
+    grid-area: edu;
+  }
+
+  .side-block:nth-of-type(4) {
+    grid-area: cert;
+    margin-top: 1rem;
+  }
+
+  .info {
+    grid-template-columns: 4rem 1fr;
+    gap: 0.15rem 0.75rem;
   }
 
   .content {
-    padding: 0 0 0 2.25rem;
+    padding: 1.5rem 0 0;
   }
 
   .content section + section {
-    margin-top: 2rem;
+    margin-top: 1.6rem;
   }
 
   .intro {
@@ -426,15 +567,17 @@ h1 {
   }
 
   .company + .company {
-    margin-top: 1.5rem;
+    margin-top: 0;
+    break-before: page;
   }
 
   .company-head {
     margin-bottom: 0.6rem;
+    break-after: avoid;
   }
 
   .project {
-    grid-template-columns: 24rem minmax(0, 1fr);
+    grid-template-columns: 30rem minmax(0, 1fr);
     grid-template-areas:
       "head list"
       "desc list"
@@ -442,11 +585,36 @@ h1 {
     grid-template-rows: auto auto 1fr;
     column-gap: 2rem;
     row-gap: 0.3rem;
-    padding: 0.75rem 0;
+    padding: 0.6rem 0;
     break-inside: avoid;
   }
 
   .project > ul {
     gap: 0.05rem;
+  }
+
+  .case {
+    padding: 0.55rem 0;
+    break-inside: avoid;
+  }
+
+  .case-head {
+    margin-bottom: 0.4rem;
+  }
+
+  .case-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    grid-auto-flow: column;
+    row-gap: 0.2rem;
+  }
+
+  .case-grid p:nth-child(n + 3) {
+    padding-left: 1.25rem;
+    border-left: 1px solid var(--line);
+  }
+
+  .case-grid p:nth-child(-n + 2) {
+    padding-right: 1.25rem;
   }
 }
