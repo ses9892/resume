@@ -225,6 +225,52 @@ h1 {
   margin-top: 2.5rem;
 }
 
+.intro-lead {
+  max-width: 62rem;
+  margin-bottom: 0.9rem;
+  color: var(--text);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.ways {
+  counter-reset: way;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.ways li {
+  counter-increment: way;
+  padding: 0.95rem 1rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--side);
+}
+
+.ways li::before {
+  content: counter(way, decimal-leading-zero);
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.ways strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.ways p {
+  color: var(--sub);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
 .intro strong,
 .project li strong {
   color: var(--text);
@@ -414,6 +460,10 @@ h1 {
 }
 
 @media (max-width: 1100px) {
+  .ways {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
 
   .project {
     grid-template-columns: 1fr;
@@ -427,6 +477,11 @@ h1 {
 }
 
 @media (max-width: 800px) {
+  .ways {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
   .layout {
     grid-template-columns: 1fr;
   }
@@ -465,7 +520,7 @@ h1 {
 @media print {
   html,
   body {
-    font-size: 12px;
+    font-size: 11.3px;
   }
 
   body {
@@ -616,5 +671,23 @@ h1 {
 
   .case-grid p:nth-child(-n + 2) {
     padding-right: 1.25rem;
+  }
+
+  .ways {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  .ways li {
+    padding: 0.7rem 0.8rem 0.75rem;
+  }
+
+  .ways li::before {
+    float: left;
+    margin: 0.1rem 0.4rem 0 0;
+  }
+
+  .ways p {
+    line-height: 1.5;
   }
 }
