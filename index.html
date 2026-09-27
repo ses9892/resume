@@ -291,7 +291,8 @@
               </div>
             </div>
 
-            <div class="project">
+            <div class="project linked">
+              <span class="row-arrow" aria-hidden="true"></span>
               <div class="project-head">
                 <h4><a href="./projects/woori-tablet.html">우리은행 AI기반 불완전판매방지 태블릿 서비스 고도화</a></h4>
                 <span class="period">2022.10 – 2023.01 · KT 연계</span>
@@ -308,7 +309,8 @@
               </div>
             </div>
 
-            <div class="project">
+            <div class="project linked">
+              <span class="row-arrow" aria-hidden="true"></span>
               <div class="project-head">
                 <h4><a href="./projects/woori-misselling.html">우리은행 AI 기반 불완전판매방지 솔루션 구축</a></h4>
                 <span class="period">2021.10 – 2022.10 · KT 연계</span>
@@ -328,50 +330,6 @@
             </div>
           </div>
         </article>
-      </section>
-
-      <section>
-        <h2>트러블슈팅<span class="dot">.</span></h2>
-        <div class="cases">
-          <div class="case">
-            <div class="case-head">
-              <h4>실시간 음성 스트림 지연·끊김 개선</h4>
-              <span class="period">KB증권 AI기반 금융상담 시스템</span>
-            </div>
-            <div class="case-grid">
-              <p><span class="step">문제</span>상담이 몰리는 시간대에 실시간 오디오 전송 지연과 끊김 발생</p>
-              <p><span class="step">원인</span>스트림 전송이 단일 경로에 집중되고, 느린 클라이언트의 버퍼가 쌓이며 전체 전송이 밀림</p>
-              <p><span class="step">해결</span>Nginx로 스트리밍 트래픽을 분산하고, 세션별 버퍼 상한과 지연 패킷 폐기 정책 적용</p>
-              <p class="result"><span class="step">결과</span>피크 시간대에도 끊김 없이 실시간 전송 유지</p>
-            </div>
-          </div>
-
-          <div class="case">
-            <div class="case-head">
-              <h4>Netty 중계 서버 메모리 누수 해결</h4>
-              <span class="period">우리은행 AI기반 불완전판매방지 태블릿 서비스</span>
-            </div>
-            <div class="case-grid">
-              <p><span class="step">문제</span>장시간 운영하면 중계 서버 메모리가 계속 늘다가 서버가 멈춤(OOM)</p>
-              <p><span class="step">원인</span>다 쓴 데이터 버퍼(ByteBuf)를 해제하지 않았고, 끊긴 세션의 연결 정리가 누락됨</p>
-              <p><span class="step">해결</span>버퍼 해제 처리를 보완하고 일정 시간 응답 없는 연결은 자동 종료, 태블릿·RTP 중계·Proxy 등 통신 모듈별 로그를 보강해 누수 구간 추적·검증</p>
-              <p class="result"><span class="step">결과</span>장기 운영에도 메모리 사용량 안정</p>
-            </div>
-          </div>
-
-          <div class="case">
-            <div class="case-head">
-              <h4>DB 프로시저 종속 로직의 JPA 전환</h4>
-              <span class="period">농협 AI기반 금융상담 시스템</span>
-            </div>
-            <div class="case-grid">
-              <p><span class="step">문제</span>운영 DB가 PostgreSQL에서 Tibero로 바뀌며 PostgreSQL 전용 함수·프로시저 동작 불가</p>
-              <p><span class="step">원인</span>핵심 비즈니스 로직이 DB 프로시저에 묶여 DBMS 종속성이 높음</p>
-              <p><span class="step">해결</span>프로시저 로직 분석 후 JPA 기반 서비스 코드로 재구현, 기존 쿼리 결과와 비교 검증</p>
-              <p class="result"><span class="step">결과</span>DB 종속성 제거로 DB 변경 대응이 쉬워지고, 로직을 코드로 관리해 유지보수성 향상</p>
-            </div>
-          </div>
-        </div>
       </section>
       </main>
     </div>
