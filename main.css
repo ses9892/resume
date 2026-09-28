@@ -626,8 +626,7 @@ h1 {
   }
 
   .company + .company {
-    margin-top: 0;
-    break-before: page;
+    margin-top: 1.4rem;
   }
 
   .company-head {
@@ -652,6 +651,7 @@ h1 {
     gap: 0.05rem;
   }
   .ways {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.6rem;
   }
 
