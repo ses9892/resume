@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>농협 AI기반 금융상담 시스템 구축</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
+    />
+    <link rel="stylesheet" href="./project.css" />
+  </head>
+  <body>
+    <div class="layout">
+    <aside class="toc">
+      <a class="back" href="../index.html">← 이력서로 돌아가기</a>
+      <p class="toc-kicker">경력기술서</p>
+      <p class="toc-title">농협 AI기반<br />금융상담 시스템 구축</p>
+      <p class="toc-meta">2022.12 – 2023.04 · LG CNS / 퓨렌스</p>
+      <nav>
+        <p class="toc-label">목차</p>
+        <a href="#arch"><span>00</span>아키텍처</a>
+        <a href="#role"><span>01</span>규모와 역할</a>
+        <a href="#netty"><span>02</span>Netty 녹취 엔진</a>
+        <a href="#jpa"><span>03</span>JPA 전환</a>
+        <a href="#cicd"><span>04</span>CI/CD</a>
+        <a href="#trouble"><span>05</span>트러블슈팅</a>
+        <a href="#results"><span>06</span>핵심성과</a>
+      </nav>
+    </aside>
+
+    <main class="page">
+      <p class="kicker">경력기술서 · 2022.12 – 2023.04 · LG CNS / 퓨렌스</p>
+      <h1>농협 AI기반 금융상담 시스템 구축</h1>
+      <p class="meta">풀스택 개발 및 녹취 엔진 개발 · Netty · JPA · Jenkins</p>
+      <p class="lead">
+        서버 이중화와 L4 VIP 구성은
+        <a href="./woori-misselling.html">우리은행 불완전판매방지 솔루션</a>과 같습니다.
+        그 위에서 <strong>Netty 녹취 엔진, Tibero 전환에 맞춘 JPA 재구현, Jenkins · Shell CI/CD</strong>를 개발했습니다.
+      </p>
+      <div class="chips">
+        <span>Netty</span>
+        <span>Spring (JPA)</span>
+        <span>Tibero</span>
+        <span>PostgreSQL</span>
+        <span>REST</span>
+        <span>Kafka</span>
+        <span>Jenkins</span>
+        <span>Shell</span>
+      </div>
+
+      <section id="arch">
+        <div class="num">00</div>
+        <h2>같은 인프라, 다른 구현</h2>
+        <div class="arch">
+          <div class="arch-bar">
+            <span>서버 1·2 이중화 · L4 VIP</span>
+            <span class="arch-hint">녹취 Hash · WAS Round Robin</span>
+          </div>
+          <div class="tiers">
+            <div class="corner"></div>
+            <div class="flow-head">상담 · 연동</div>
+            <div class="flow-head">녹취</div>
+            <div class="flow-head">배포</div>
+
+            <div class="tier">Client</div>
+            <div class="cell">
+              <div class="node"><b>은행 CS</b><span>상담 업무 프로그램</span></div>
+            </div>
+            <div class="cell">
+              <div class="node"><b>REC Agent</b><span>단말 녹취</span></div>
+            </div>
+            <div class="cell">
+              <div class="node"><b>Jenkins</b><span>개발망 빌드</span></div>
+            </div>
+
+            <div class="tier">L4 VIP</div>
+            <div class="cell"><div class="wire"><span>REST</span></div><div class="node vip"><b>VIP</b><span>Round Robin</span></div></div>
+            <div class="cell"><div class="wire"><span>RTP</span></div><div class="node vip"><b>VIP</b><span>Hash</span></div></div>
+            <div class="cell empty"></div>
+
+            <div class="tier">Server</div>
+            <div class="cell">
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화">
+                <div class="node"><b>WAS 1</b><span>Spring · JPA</span></div>
+                <div class="node"><b>WAS 2</b><span>Spring · JPA</span></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화">
+                <div class="node mine"><b>녹취 1</b><span>Netty 엔진</span></div>
+                <div class="node mine"><b>녹취 2</b><span>Netty 엔진</span></div>
+              </div>
+            </div>
+            <div class="cell">
+              <div class="node mine"><b>Shell</b><span>서버별 배포 스크립트</span></div>
+            </div>
+
+            <div class="tier">Data</div>
+            <div class="cell">
+              <div class="wire"><span>DB VIP</span></div>
+              <div class="pair" data-link="복제">
+                <div class="node"><b>Tibero 1</b><span>Master</span></div>
+                <div class="node"><b>Tibero 2</b><span>Slave</span></div>
+              </div>
+              <p class="cell-note">PostgreSQL 함수 · 프로시저 → JPA</p>
+            </div>
+            <div class="cell">
+              <div class="wire"></div>
+              <div class="node"><b>녹취 저장</b><span>Netty 엔진이 수신한 음성</span></div>
+            </div>
+            <div class="cell empty"></div>
+          </div>
+          <div class="live">
+            <span class="live-label">담당한 구현</span>
+            <span class="live-flow">
+              <b>Netty</b><i>녹취 엔진</i><b>JPA</b><i>Tibero 전환</i><b>Jenkins · Shell</b>
+            </span>
+          </div>
+          <div class="arch-foot">
+            L4 VIP, 서버 1·2 이중화, 녹취 <code>Hash</code>, WAS Round Robin은 우리은행 솔루션과 같은 구성입니다.
+            농협에서는 녹취 수신을 <code>Netty</code>로 만들고, DB 로직을 <code>JPA</code>로 옮기고, 개발망에 <code>Jenkins</code>와 <code>Shell</code> 배포를 구축했습니다. 운영망은 <code>PCMS</code> 결재 후 수동 배포입니다.
+          </div>
+        </div>
+      </section>
+
+      <section id="role">
+        <div class="num">01</div>
+        <h2>규모와 역할</h2>
+        <div class="stats">
+          <div class="stat"><b>LG CNS 연계</b><span>농협 금융상담 시스템</span></div>
+          <div class="stat"><b>5개월</b><span>2022.12 – 2023.04</span></div>
+          <div class="stat"><b>풀스택 · 녹취 엔진</b><span>화면 연동과 수신 서버</span></div>
+          <div class="stat"><b>개발망 CI/CD</b><span>Jenkins · Shell</span></div>
+        </div>
+      </section>
+
+      <section id="netty">
+        <div class="num">02</div>
+        <h2>Netty 녹취 엔진과 연동 API</h2>
+        <p class="note">
+          녹취는 <code>RTP</code>로 받습니다. <code>RTP</code>는 음성을 잘게 나눈 패킷이라, 순번과 시간이 붙어 있습니다.
+          한 통화 안에서도 고객이 말한 소리와 상담원이 말한 소리는 섞여 오지 않습니다.
+          고객 마이크는 <code>RX</code>, 상담원 마이크는 <code>TX</code>로 각각 들어옵니다.
+        </p>
+        <p class="note">
+          엔진은 이 두 스트림을 같은 통화 키로 찾아 채널 하나에 넣습니다.
+          채널 1개가 동시 녹취 1건이고, 라이선스도 그 채널을 1개로 셉니다.
+          음원이 둘이라고 라이선스가 2개가 되지는 않습니다.
+          저장할 때는 <code>RX</code>와 <code>TX</code>의 순번을 맞춰 한 통화 파일로 남깁니다.
+        </p>
+        <div class="ch-board">
+          <div class="ch-streams">
+            <div class="node"><b>고객 RX</b><span>RTP</span></div>
+            <div class="node"><b>상담원 TX</b><span>RTP</span></div>
+          </div>
+          <div class="ch-join">한 통화로 매칭</div>
+          <div class="node mine"><b>채널 1개</b><span>라이선스 1개 · RX + TX</span></div>
+          <div class="ch-join">여러 채널을 적은 스레드가 처리</div>
+          <div class="ch-loops">
+            <div><em>이벤트 루프 1</em><span>채널 1 · 4 · 7</span></div>
+            <div><em>이벤트 루프 2</em><span>채널 2 · 5 · 8</span></div>
+            <div><em>이벤트 루프 3</em><span>채널 3 · 6 · 9</span></div>
+          </div>
+        </div>
+        <div class="seq rich">
+          <div class="seq-head">
+            <div>고객 RX</div>
+            <div>상담원 TX</div>
+            <div>녹취 VIP</div>
+            <div>Netty</div>
+            <div>채널</div>
+            <div>녹취 저장</div>
+          </div>
+          <div class="seq-body">
+            <div class="lifelines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="phase">1. 두 음원이 따로 들어옴</div>
+            <div class="msg" style="grid-column: 1 / 4; --n: 3"><span>① 고객 RTP</span></div>
+            <div class="msg" style="grid-column: 2 / 4; --n: 2"><span>② 상담원 RTP</span></div>
+            <div class="phase">2. 같은 엔진 · 같은 채널</div>
+            <div class="msg" style="grid-column: 3 / 5; --n: 2"><span>③ Hash로 한 엔진에 고정</span></div>
+            <div class="msg" style="grid-column: 4 / 6; --n: 2"><span>④ 통화 키로 매칭, 라이선스 +1</span></div>
+            <div class="phase">3. 저장과 반환</div>
+            <div class="msg" style="grid-column: 5 / 7; --n: 2"><span>⑤ 시퀀스로 맞춰 한 파일로 저장</span></div>
+            <div class="msg rev" style="grid-column: 4 / 6; --n: 2"><span>⑥ 양쪽 종료 후 라이선스 -1</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="jpa">
+        <div class="num">03</div>
+        <h2>PostgreSQL 함수 · 프로시저 약 20개를 JPA 서비스로 전환</h2>
+        <p class="note">
+          운영 DB가 <code>Tibero</code>로 바뀌면서 <code>PostgreSQL</code> 함수 · 프로시저를 그대로 쓸 수 없었습니다.
+          워크플로우를 이루는 약 20개를 <code>JPA</code> 서비스 코드로 하나씩 옮겼습니다.
+        </p>
+        <p class="note">
+          어려웠던 부분은 프로시저가 다른 프로시저 · 함수를 호출하는 구조였습니다.
+          DB 안에서는 안쪽 호출이 모두 바깥 프로시저의 트랜잭션 안에서 실행되지만, 자바로 옮기면 트랜잭션 범위를 코드에서 직접 정해야 합니다.
+        </p>
+        <div class="tx-compare">
+          <div class="tx-col">
+            <p class="tx-label plain">전환 전 · DB 안에서 실행</p>
+            <div class="tx-outer base">
+              <div class="tx-step">
+                <em>트랜잭션 1개 · 경계</em>
+                <b>최상위 프로시저</b>
+                <span>여기서 시작하고 여기서 커밋</span>
+              </div>
+              <div class="tx-step child">
+                <em>같은 트랜잭션</em>
+                <b>프로시저 A</b>
+                <span>바깥 트랜잭션 안에서 실행</span>
+              </div>
+              <div class="tx-step child">
+                <em>같은 트랜잭션</em>
+                <b>함수 B</b>
+                <span>조회 · 계산</span>
+              </div>
+              <div class="tx-step child">
+                <em>같은 트랜잭션</em>
+                <b>프로시저 C</b>
+                <span>바깥 트랜잭션 안에서 실행</span>
+              </div>
+              <p>하나라도 실패하면 전체가 롤백됩니다.</p>
+            </div>
+          </div>
+          <div class="tx-col">
+            <p class="tx-label ok">전환 후 · 경계는 진입점 한 곳</p>
+            <div class="tx-outer split">
+              <div class="tx-step ok">
+                <em>@Transactional · 경계</em>
+                <b>WorkflowService.run()</b>
+                <span>최상위 프로시저에 대응 · 여기서 시작하고 여기서 커밋</span>
+              </div>
+              <div class="tx-step child">
+                <em>REQUIRED · 참여</em>
+                <b>AService</b>
+                <span>구 프로시저 A · 바깥 트랜잭션에 합류</span>
+              </div>
+              <div class="tx-step child">
+                <em>트랜잭션 없음</em>
+                <b>BCalculator</b>
+                <span>구 함수 B · 조회 · 계산만</span>
+              </div>
+              <div class="tx-step child">
+                <em>REQUIRED · 참여</em>
+                <b>CService</b>
+                <span>구 프로시저 C · 바깥 트랜잭션에 합류</span>
+              </div>
+              <div class="tx-step child opt">
+                <em>REQUIRES_NEW · 필요한 곳만</em>
+                <b>실패와 무관하게 남아야 하는 처리</b>
+                <span>본 작업이 롤백돼도 따로 커밋</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="spec">
+          <div>
+            <em>01 · 경계는 진입점 한 곳</em>
+            <p>최상위 프로시저에 대응하는 서비스 메서드 하나에만 <code>@Transactional</code>을 둡니다. 하위 단계는 기본 전파(<code>REQUIRED</code>)로 같은 트랜잭션에 참여합니다.</p>
+            <p>그래서 원래 프로시저처럼 워크플로우 전체가 한 번에 커밋되거나 한 번에 롤백됩니다.</p>
+          </div>
+          <div>
+            <em>02 · 프로시저 단위로 빈 분리</em>
+            <p>같은 클래스 안에서 자기 메서드를 부르면 Spring 프록시를 거치지 않아 트랜잭션 설정이 적용되지 않습니다.</p>
+            <p>그래서 프로시저 하나를 서비스 빈 하나로 나눴고, 조회 · 계산만 하던 함수는 트랜잭션 없는 컴포넌트로 뺐습니다.</p>
+          </div>
+          <div>
+            <em>03 · 예외와 롤백 규칙</em>
+            <p>프로시저의 <code>RAISE EXCEPTION</code>은 자바 예외로 옮겼습니다. Spring은 기본적으로 런타임 예외에서만 롤백하므로, 체크 예외는 <code>rollbackFor</code>로 롤백 대상을 명시합니다.</p>
+            <p>하위 단계 예외를 바깥에서 잡고 넘기면 트랜잭션이 롤백 전용으로 표시돼 커밋 시점에 실패하므로, 예외는 삼키지 않고 경계까지 올립니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="cicd">
+        <div class="num">04</div>
+        <h2>개발망 Jenkins · Shell CI/CD</h2>
+        <p class="note">CI/CD는 개발망에 구축했습니다. 개발 서버 안에서 <code>Jenkins</code>로 빌드하고, 서버마다 둔 <code>Shell</code>로 반영합니다. 운영망은 자동화하지 않았습니다.</p>
+        <div class="timeline">
+          <div class="tl-item mine">
+            <div class="tl-dot blue"></div>
+            <div class="tl-phase blue">개발망 · Step 01 / 빌드 · 담당</div>
+            <div class="tl-title">Jenkins로 개발 서버 안에서 빌드</div>
+            <div class="tl-desc">개발망 서버에 <code>Jenkins</code>를 두고, 같은 기준으로 빌드가 나오게 했습니다.</div>
+          </div>
+          <div class="tl-item mine">
+            <div class="tl-dot blue"></div>
+            <div class="tl-phase blue">개발망 · Step 02 / 배포 · 담당</div>
+            <div class="tl-title">서버별 Shell 스크립트 실행</div>
+            <div class="tl-desc">개발 서버마다 배포 <code>Shell</code>을 두고, Jenkins가 그 스크립트를 호출해 서버별로 반영했습니다.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot green"></div>
+            <div class="tl-phase green">개발망 · Step 03 / 반영</div>
+            <div class="tl-title">WAS · 녹취 엔진 반영</div>
+            <div class="tl-desc">JPA가 올라간 WAS와 Netty 녹취 엔진이 개발 서버에 같은 산출물로 반영됩니다.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot"></div>
+            <div class="tl-phase">운영망 · 수동</div>
+            <div class="tl-title">농협 내부 PCMS 결재 후 수동 배포</div>
+            <div class="tl-desc">운영망은 우리은행과 같이 농협 내부 <code>PCMS</code>로 결재라인만 탄 뒤, 승인된 건을 수동으로 배포했습니다. Jenkins 파이프라인은 타지 않습니다.</div>
+          </div>
+        </div>
+        <div class="spec">
+          <div>
+            <em>개발망에서 난 효과</em>
+            <p>개발 반영을 서버마다 손으로 복사하지 않아도 됩니다. 빌드 기준이 하나라 개발 서버 간 산출물이 달라지지 않고, 녹취 엔진과 WAS를 같은 흐름으로 올릴 수 있습니다.</p>
+          </div>
+          <div>
+            <em>운영망은 분리</em>
+            <p>운영 반영은 결재가 끝난 뒤에만 진행됩니다. 개발 자동 배포와 운영 수동 배포가 나뉘어, 개발 중 배포가 운영 서버로 바로 들어가지 않습니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="trouble">
+        <div class="num">05</div>
+        <h2>트러블슈팅</h2>
+
+        <article class="case">
+          <h3><span>01</span>RX · TX가 다른 이벤트 루프에서 같은 통화 상태를 동시에 수정</h3>
+          <p class="tx-label bad">문제 · 동기화되지 않은 공유 상태</p>
+          <div class="seq rich flow5">
+            <div class="seq-head">
+              <div>고객 RX</div>
+              <div>상담원 TX</div>
+              <div>루프 1</div>
+              <div>루프 2</div>
+              <div>통화 상태</div>
+            </div>
+            <div class="seq-body">
+              <div class="lifelines"><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="msg" style="grid-column: 1 / 4; --n: 3"><span>① RX를 루프 1에서 수신</span></div>
+              <div class="msg" style="grid-column: 3 / 6; --n: 3"><span>② 루프 1이 통화 상태 수정</span></div>
+              <div class="msg" style="grid-column: 2 / 5; --n: 3"><span>③ TX를 루프 2에서 수신</span></div>
+              <div class="msg" style="grid-column: 4 / 6; --n: 2"><span>④ 루프 2도 동시에 수정</span></div>
+            </div>
+          </div>
+          <p class="note">
+            <code>RX</code>와 <code>TX</code>는 별도 <code>RTP</code> 스트림이라 서로 다른 Netty 채널로 받고, 두 채널이 다른 이벤트 루프에 배정될 수 있습니다.
+            두 루프가 같은 통화 객체(시퀀스 · 버퍼)와 라이선스 카운터를 동기화 없이 고치면 음원 순서가 섞이거나 라이선스 수가 어긋납니다.
+            그렇다고 이벤트 루프에서 락을 잡으면, 그 루프가 맡은 다른 통화의 수신까지 멈춰 병목이 됩니다.
+          </p>
+          <p class="tx-label ok">수정 · 통화 상태는 담당 루프 한 곳, 라이선스는 원자 연산</p>
+          <div class="seq rich flow5">
+            <div class="seq-head">
+              <div>고객 RX</div>
+              <div>상담원 TX</div>
+              <div>루프 1 · 담당</div>
+              <div>루프 2</div>
+              <div>통화 상태</div>
+            </div>
+            <div class="seq-body">
+              <div class="lifelines"><i></i><i></i><i></i><i></i><i></i></div>
+              <div class="msg" style="grid-column: 1 / 4; --n: 3"><span>① RX를 담당 루프 1에서 수신</span></div>
+              <div class="msg" style="grid-column: 2 / 5; --n: 3"><span>② TX를 루프 2에서 수신</span></div>
+              <div class="msg rev" style="grid-column: 3 / 5; --n: 2"><span>③ 담당 루프 1로 작업 전달</span></div>
+              <div class="msg" style="grid-column: 3 / 6; --n: 3"><span>④ 루프 1만 통화 상태 수정</span></div>
+            </div>
+          </div>
+          <p class="note">
+            통화가 시작될 때 담당 이벤트 루프를 정하고, 다른 루프에서 받은 패킷은 <code>eventLoop().execute()</code>로 담당 루프에 넘겨 통화 상태를 한 스레드만 고치게 했습니다.
+            라이선스 카운터는 서버의 모든 통화가 함께 쓰는 값이라 루프에 묶지 않고 원자 연산(<code>AtomicInteger</code>)으로 증감하고, 통화 종료 때 반환이 두 번 일어나지 않게 종료 여부도 한 번만 바뀌도록 했습니다.
+          </p>
+          <div class="ps">
+            <div class="ps-row result"><b>결과</b><p>통화 상태를 동시에 고치는 구간이 없어져 음원이 섞이지 않습니다. 락을 쓰지 않아 이벤트 루프가 대기로 멈추지 않고, 라이선스 사용 수는 실제 동시 통화 수와 맞습니다.</p></div>
+          </div>
+        </article>
+
+        <article class="case">
+          <h3><span>02</span>프로시저 내부 호출을 옮기면서 트랜잭션 경계가 어긋남</h3>
+          <p class="tx-label bad">문제 · 단계마다 따로 커밋되면 반쪽 데이터</p>
+          <div class="seq rich flow4">
+            <div class="seq-head">
+              <div>WorkflowService</div>
+              <div>AService</div>
+              <div>CService</div>
+              <div>DB</div>
+            </div>
+            <div class="seq-body">
+              <div class="lifelines"><i></i><i></i><i></i><i></i></div>
+              <div class="msg" style="grid-column: 1 / 3; --n: 2"><span>① A 호출</span></div>
+              <div class="msg" style="grid-column: 2 / 5; --n: 3"><span>② A가 자기 트랜잭션으로 커밋</span></div>
+              <div class="msg" style="grid-column: 1 / 4; --n: 3"><span>③ C 호출</span></div>
+              <div class="msg rev" style="grid-column: 1 / 4; --n: 3"><span>④ C 실패 · C만 롤백</span></div>
+            </div>
+          </div>
+          <p class="note">
+            DB 안에서는 프로시저 A · C가 바깥 프로시저의 트랜잭션 안에서 실행돼, C가 실패하면 A도 함께 취소됐습니다.
+            자바로 옮기면서 단계마다 트랜잭션이 따로 열리면 A만 반영되고 C는 빠진 반쪽 데이터가 남습니다.
+            같은 클래스 안에서 단계 메서드를 부르면 트랜잭션 설정 자체가 적용되지 않는 문제도 있었습니다.
+          </p>
+          <p class="tx-label ok">수정 · 경계를 진입점 한 곳으로, 하위 단계는 참여</p>
+          <div class="seq rich flow4">
+            <div class="seq-head">
+              <div>WorkflowService</div>
+              <div>AService</div>
+              <div>CService</div>
+              <div>DB</div>
+            </div>
+            <div class="seq-body">
+              <div class="lifelines"><i></i><i></i><i></i><i></i></div>
+              <div class="msg" style="grid-column: 1 / 5; --n: 4"><span>① run()에서 트랜잭션 시작</span></div>
+              <div class="msg" style="grid-column: 1 / 3; --n: 2"><span>② A 참여 · 아직 커밋 전</span></div>
+              <div class="msg" style="grid-column: 1 / 4; --n: 3"><span>③ C 참여 · 실패하면 예외 전파</span></div>
+              <div class="msg rev" style="grid-column: 1 / 5; --n: 4"><span>④ 경계 전체 롤백 · A도 취소</span></div>
+            </div>
+          </div>
+          <p class="note">
+            최상위 프로시저에 대응하는 <code>WorkflowService.run()</code>에만 <code>@Transactional</code>을 두고, 프로시저 단위로 나눈 A · C 빈은 <code>REQUIRED</code>로 같은 트랜잭션에 참여시켰습니다.
+            하위 단계 예외는 삼키지 않고 경계까지 올려, C가 실패하면 A까지 함께 롤백됩니다.
+            전환한 약 20개는 같은 입력으로 전환 전 프로시저 결과와 대조한 뒤 반영했습니다.
+          </p>
+          <div class="ps">
+            <div class="ps-row result"><b>결과</b><p>워크플로우 약 20개가 전환 전과 같은 단위로 커밋 · 롤백되어 반쪽 데이터가 남지 않습니다. 트랜잭션 범위가 코드(<code>@Transactional</code>)에 드러나 어디까지 한 번에 처리되는지 바로 확인할 수 있습니다.</p></div>
+          </div>
+        </article>
+      </section>
+
+      <section id="results">
+        <div class="num">06</div>
+        <h2>핵심성과</h2>
+        <div class="results">
+          <article class="result-card">
+            <em>녹취 · 트러블슈팅 01</em>
+            <b>통화 상태 동시 수정 → 담당 루프 1개가 전담</b>
+            <div class="did">
+              <span>한 일</span>
+              <p><code>RX</code> · <code>TX</code>가 다른 이벤트 루프에서 같은 통화 상태를 동시에 고치는 지점을 찾았습니다. 통화 상태는 담당 루프에 넘겨 한 스레드만 수정하고, 공유 라이선스 카운터는 원자 연산으로 증감했습니다.</p>
+            </div>
+            <div class="got">
+              <span>개선</span>
+              <p>락 없이 동시 수정 구간이 사라져 이벤트 루프가 대기로 멈추지 않습니다. 음원이 섞이지 않고, 라이선스 사용 수는 실제 동시 통화 수와 맞습니다.</p>
+            </div>
+          </article>
+          <article class="result-card">
+            <em>데이터 · 트러블슈팅 02</em>
+            <b>DB 프로시저 의존 약 20개 → 0개</b>
+            <div class="did">
+              <span>한 일</span>
+              <p>워크플로우 함수 · 프로시저 약 20개를 각각 <code>JPA</code> 서비스로 옮겼습니다. 트랜잭션 경계는 진입점 한 곳에 두고, 프로시저 단위로 나눈 하위 빈은 같은 트랜잭션에 참여시켰습니다.</p>
+            </div>
+            <div class="got">
+              <span>개선</span>
+              <p><code>Tibero</code>에서 PostgreSQL 전용 함수 없이 동작합니다. 실패하면 워크플로우 전체가 롤백돼 반쪽 데이터가 남지 않고, 20개 모두 전환 전 결과와 대조했습니다.</p>
+            </div>
+          </article>
+          <article class="result-card">
+            <em>배포</em>
+            <b>개발 반영은 서버 수만큼의 수작업 → 빌드 1회</b>
+            <div class="did">
+              <span>한 일</span>
+              <p>개발망은 <code>Jenkins</code> 빌드 1번에 서버별 <code>Shell</code>이 같은 산출물을 올립니다. 운영망은 농협 <code>PCMS</code> 결재 뒤 수동 배포로 분리했습니다.</p>
+            </div>
+            <div class="got">
+              <span>개선</span>
+              <p>서버마다 다른 산출물이 올라가 다르게 동작하는 일이 없습니다. 결재 전 개발 산출물이 운영으로 들어가지 않습니다.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+    </div>
+    <script>
+      const links = [...document.querySelectorAll(".toc nav a")];
+      const sections = links.map((a) => document.querySelector(a.getAttribute("href")));
+      let lockUntil = 0;
+      const mark = (id) =>
+        links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === `#${id}`));
+      const setActive = () => {
+        if (Date.now() < lockUntil) return;
+        const y = window.scrollY + 120;
+        let current = sections[0];
+        for (const s of sections) if (s.getBoundingClientRect().top + window.scrollY <= y) current = s;
+        mark(current.id);
+      };
+      links.forEach((a) =>
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = document.querySelector(a.getAttribute("href"));
+          mark(target.id);
+          lockUntil = Date.now() + 900;
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          history.replaceState(null, "", a.getAttribute("href"));
+        })
+      );
+      window.addEventListener("scroll", setActive, { passive: true });
+      setActive();
+    </script>
+  </body>
+</html>
