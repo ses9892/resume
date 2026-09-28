@@ -237,22 +237,32 @@ h1 {
 .ways {
   counter-reset: way;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
 }
 
 .ways li {
   counter-increment: way;
-  padding: 0.95rem 1rem 1rem;
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: 0.9rem;
+  padding: 1.15rem 1.25rem 1.2rem;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--side);
+  background: var(--paper);
 }
 
 .ways li::before {
   content: counter(way, decimal-leading-zero);
-  display: block;
-  margin-bottom: 0.35rem;
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid #d5e3fa;
+  border-radius: 8px;
+  background: #f2f7ff;
   color: var(--accent);
   font-size: 0.8rem;
   font-weight: 800;
@@ -260,15 +270,21 @@ h1 {
 
 .ways strong {
   display: block;
-  margin-bottom: 0.35rem;
-  font-size: 0.98rem;
+  margin-bottom: 0.45rem;
+  font-size: 1.02rem;
   font-weight: 700;
+  line-height: 1.45;
 }
 
 .ways p {
   color: var(--sub);
   font-size: 0.9rem;
-  line-height: 1.6;
+  line-height: 1.7;
+}
+
+.ways p b {
+  color: var(--text);
+  font-weight: 700;
 }
 
 .intro strong,
@@ -457,11 +473,6 @@ h1 {
   opacity: 0.75;
 }
 @media (max-width: 1100px) {
-  .ways {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-
   .project {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -476,7 +487,6 @@ h1 {
 @media (max-width: 800px) {
   .ways {
     grid-template-columns: 1fr;
-    gap: 1rem;
   }
 
   .layout {
@@ -642,20 +652,26 @@ h1 {
     gap: 0.05rem;
   }
   .ways {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.7rem;
+    gap: 0.6rem;
   }
 
   .ways li {
-    padding: 0.7rem 0.8rem 0.75rem;
+    grid-template-columns: 1.9rem minmax(0, 1fr);
+    column-gap: 0.7rem;
+    padding: 0.75rem 0.9rem 0.8rem;
+    break-inside: avoid;
   }
 
   .ways li::before {
-    float: left;
-    margin: 0.1rem 0.4rem 0 0;
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .ways strong {
+    margin-bottom: 0.25rem;
   }
 
   .ways p {
-    line-height: 1.5;
+    line-height: 1.55;
   }
 }

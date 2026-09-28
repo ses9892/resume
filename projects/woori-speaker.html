@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>우리은행 ODS AI 화자분리 파이프라인 구축</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
+    />
+    <link rel="stylesheet" href="./project.css" />
+  </head>
+  <body>
+    <div class="layout">
+    <aside class="toc">
+      <a class="back" href="../index.html">← 이력서로 돌아가기</a>
+      <p class="toc-kicker">경력기술서</p>
+      <p class="toc-title">우리은행 ODS<br />AI 화자분리 파이프라인</p>
+      <p class="toc-meta">2024.01 – 2024.07 · 퓨렌스</p>
+      <nav>
+        <p class="toc-label">목차</p>
+        <a href="#arch"><span>00</span>아키텍처</a>
+        <a href="#role"><span>01</span>규모와 역할</a>
+        <a href="#flow"><span>02</span>화자분리 흐름</a>
+        <a href="#license"><span>03</span>라이선스</a>
+        <a href="#trouble"><span>04</span>트러블슈팅</a>
+        <a href="#results"><span>05</span>핵심성과</a>
+      </nav>
+    </aside>
+
+    <main class="page">
+      <p class="kicker">경력기술서 · 2024.01 – 2024.07 · 퓨렌스</p>
+      <h1>우리은행 ODS AI 화자분리 파이프라인 구축</h1>
+      <p class="meta">녹취 엔진 · 화자분리 라우팅 · STT 전송 · 라이선스 토픽</p>
+      <p class="lead">
+        태블릿 녹취는 마이크가 하나라 화자를 가를 수 없어, 내부망 GPU에서 MP3를 RX·TX PCM으로 나눈 뒤 기존 PC 녹취의 STT·TA로 이어집니다.
+        <strong>녹취 엔진의 화자분리 라우팅, 분리 음원 STT 전송, 라이선스용 Kafka 토픽</strong>을 개발했습니다.
+      </p>
+      <div class="chips">
+        <span>Netty</span>
+        <span>TCP Socket</span>
+        <span>WebSocket</span>
+        <span>Kafka</span>
+        <span>Python</span>
+        <span>JEUS</span>
+        <span>L4 / VIP</span>
+        <span>Linux</span>
+      </div>
+
+      <section id="arch">
+        <div class="num">00</div>
+        <h2>망 구간 아키텍처</h2>
+        <div class="purpose">
+          <p class="tag">개발 관점</p>
+          <p>외부망 태블릿이 내부 녹취 엔진에 바로 붙지 않도록 중계 Proxy를 두고, 화자분리는 내부 GPU 서버 2대로 라우팅하게 개발했습니다. 웹뷰의 라이선스·STT·TA는 녹취 엔진 WebSocket에서 내려주게 했습니다.</p>
+        </div>
+        <div class="arch">
+          <div class="arch-bar">
+            <span>외부망 → 중계망 → 내부운영망</span>
+            <span class="arch-hint">화자분리 서버 2대 · Round Robin</span>
+          </div>
+          <div class="zones">
+            <div class="corner"></div>
+            <div class="zone-head z1">외부망</div>
+            <div class="zone-gap"></div>
+            <div class="zone-head z2">중계망</div>
+            <div class="zone-gap"></div>
+            <div class="zone-head z3">내부운영망</div>
+
+            <div class="tier">녹취<br />TCP</div>
+            <div class="zcell z1">
+              <div class="node"><b>태블릿 앱</b><span>마이크 1개 · MP3</span></div>
+            </div>
+            <div class="hop"><span>TCP</span></div>
+            <div class="zcell z2">
+              <div class="node vip"><b>중계 VIP</b><span>이중화</span></div>
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화">
+                <div class="node mine"><b>Proxy 1</b><span>TCP · WebSocket</span></div>
+                <div class="node mine"><b>Proxy 2</b><span>TCP · WebSocket</span></div>
+              </div>
+              <p class="cell-note">기존 Proxy 개선 · ping-pong</p>
+            </div>
+            <div class="hop"><span>TCP</span></div>
+            <div class="zcell z3">
+              <div class="node vip"><b>녹취 VIP</b><span>Hash</span></div>
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화">
+                <div class="node mine"><b>녹취 엔진 1</b><span>완본 저장 · 라우팅</span></div>
+                <div class="node mine"><b>녹취 엔진 2</b><span>분리 음원 · STT</span></div>
+              </div>
+              <div class="wire both"><span>TCP</span></div>
+              <div class="node vip"><b>화자분리 VIP</b><span>Round Robin</span></div>
+              <div class="wire"></div>
+              <div class="pair" data-link="이중화">
+                <div class="node"><b>화자분리 1</b><span>GPU · 모델 연동</span></div>
+                <div class="node"><b>화자분리 2</b><span>WebSocket · RX·TX PCM</span></div>
+              </div>
+              <p class="cell-note">엔진은 직접 구현 · 모델은 연동</p>
+            </div>
+
+            <div class="tier">화면<br />WSS</div>
+            <div class="zcell z1">
+              <div class="node"><b>앱 웹뷰</b><span>WSS 클라이언트</span></div>
+            </div>
+            <div class="hop"><span>WSS</span></div>
+            <div class="zcell z2">
+              <div class="node"><b>JEUS</b><span>WebSocket 중계</span></div>
+            </div>
+            <div class="hop"><span>WSS</span></div>
+            <div class="zcell z3">
+              <div class="node mine"><b>WebSocket 서버</b><span>녹취 엔진 · 라이선스 · STT · TA</span></div>
+              <p class="cell-note">직접 구현</p>
+            </div>
+          </div>
+          <div class="live">
+            <span class="live-label">화자분리 경로</span>
+            <span class="live-flow">
+              <b>녹취 엔진</b><i>TCP</i><b>화자분리 1·2</b><i>PCM 청크</i><b>녹취 엔진</b><i>start·end</i><b>STT</b><i>Kafka</i><b>녹취 엔진</b>
+            </span>
+          </div>
+          <div class="arch-foot">
+            녹취 AP · WAS · Kafka 골격은
+            <a href="./woori-tablet.html">태블릿 서비스 고도화</a>와
+            <a href="./woori-misselling.html">불완전판매방지 솔루션 구축</a>을 그대로 사용합니다.
+            이번 프로젝트에서 내부망에 GPU 화자분리 서버 2대를 Round Robin으로 붙였고, Python 모델은 그 서버에 연동했습니다. 라이선스 토픽은 기존 Kafka 브로커 1·2에 추가했습니다.
+          </div>
+        </div>
+      </section>
+
+      <section id="role">
+        <div class="num">01</div>
+        <h2>규모와 역할</h2>
+        <div class="stats">
+          <div class="stat"><b>태블릿 상담 녹취</b><span>마이크 1개 · 화자 구분</span></div>
+          <div class="stat"><b>화자분리 2대</b><span>Round Robin · 모델 연동</span></div>
+          <div class="stat"><b>녹취 엔진</b><span>화자분리 라우팅 · STT · 라이선스</span></div>
+          <div class="stat"><b>7개월</b><span>2024.01 – 2024.07</span></div>
+        </div>
+      </section>
+
+      <section id="flow">
+        <div class="num">02</div>
+        <h2>태블릿 녹취에서 화자별 STT까지</h2>
+        <div class="purpose">
+          <p class="tag">개발 관점</p>
+          <p>마이크가 하나라 채널 분리는 엔진에서 하지 않고, 완본 저장 후 별도 스레드로 GPU 서버에 보내게 개발했습니다. 돌아온 PCM부터는 기존 PC 녹취와 같이 TCP로 STT에 넘기고, 결과는 Kafka로 받게 했습니다.</p>
+        </div>
+        <div class="seq rich">
+          <div class="seq-head">
+            <div>태블릿</div>
+            <div>중계망</div>
+            <div>녹취 엔진</div>
+            <div>화자분리</div>
+            <div>STT</div>
+            <div>Kafka</div>
+          </div>
+          <div class="seq-body">
+            <div class="lifelines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+            <div class="phase">녹취 업로드 (TCP)</div>
+            <div class="msg" style="grid-column: 1 / 3; --n: 2"><span>① MP3 업로드</span></div>
+            <div class="msg" style="grid-column: 2 / 4; --n: 2"><span>② TCP 프록시</span></div>
+
+            <div class="phase">화자분리 (TCP · Round Robin)</div>
+            <div class="msg" style="grid-column: 3 / 5; --n: 2"><span>③ 별도 스레드 · 파일</span></div>
+            <div class="msg rev" style="grid-column: 3 / 5; --n: 2"><span>④ RX·TX PCM 청크</span></div>
+
+            <div class="phase">STT (TCP 송신 · Kafka 수신)</div>
+            <div class="msg" style="grid-column: 3 / 6; --n: 3"><span>⑤ start · end · connection</span></div>
+            <div class="msg" style="grid-column: 5 / 7; --n: 2"><span>⑥ STT 결과 발행</span></div>
+            <div class="msg rev" style="grid-column: 3 / 7; --n: 4"><span>⑦ 엔진이 결과 수신</span></div>
+
+            <div class="phase">웹뷰 수신 (WSS)</div>
+            <div class="msg ws" style="grid-column: 1 / 3; --n: 2"><span>⑧ WSS 접속</span></div>
+            <div class="msg ws" style="grid-column: 2 / 4; --n: 2"><span>⑨ JEUS 중계</span></div>
+            <div class="msg ws rev" style="grid-column: 1 / 4; --n: 3"><span>⑩ 라이선스 · STT · TA</span></div>
+          </div>
+        </div>
+        <div class="seq-notes">
+          <div class="why">
+            <b>② 프록시</b>
+            <p>태블릿 프로젝트에서 만든 중계망 Proxy를 이 업로드 구간에 맞게 수정했습니다. 녹취 파일은 Netty <code>TCP</code>로 주고받고, 유휴 세션은 <code>ping-pong</code>으로 유지합니다.</p>
+          </div>
+          <div class="why">
+            <b>③ ④ Round Robin</b>
+            <p>화자분리 서버는 2대이고, 앞단은 <strong>Round Robin</strong>입니다. 서버 안에서 <code>WebSocket</code>으로 Python 모델을 호출해 MP3를 <code>RX·TX PCM</code>으로 나눕니다. 모델은 서버에 연동했고, 파일 하나의 연결이 그 서버에 머물기 때문에 Round Robin으로 나눕니다.</p>
+          </div>
+          <div class="why">
+            <b>⑤ ⑦ STT</b>
+            <p>녹취 엔진은 STT와 TCP로 <strong><code>start</code> · <code>end</code> · <code>connection</code></strong>을 주고받은 뒤 음성 패킷을 보냅니다. STT 결과는 Kafka로 돌아와, 이 구간부터 기존 PC 녹취 코드를 그대로 씁니다.</p>
+          </div>
+          <div class="why">
+            <b>⑧ ⑩ 웹뷰</b>
+            <p>웹뷰는 중계망 <code>JEUS</code>를 거쳐 녹취 엔진 WebSocket 서버에 붙습니다. <strong>라이선스 발급·검증과 STT·TA 결과</strong>를 이 연결로 받습니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="license">
+        <div class="num">03</div>
+        <h2>화자분리 채널 라이선스</h2>
+        <div class="purpose">
+          <p class="tag">개발 관점</p>
+          <p>엔진 1·2가 서로 다른 서버라 메모리를 합쳐도 라이선스 절대 개수가 되지 않습니다. 발급·반납을 Kafka 토픽으로 모으고, 같은 컨슈머 그룹에서 클러스터 전체 개수를 세도록 개발했습니다.</p>
+        </div>
+        <div class="ch-board linked">
+          <div class="ch-streams">
+            <div class="node mine"><b>녹취 엔진 1</b><span>서버 A · 파티션 0</span></div>
+            <div class="node mine"><b>녹취 엔진 2</b><span>서버 B · 파티션 1</span></div>
+          </div>
+          <div class="ch-join"><span>같은<br />컨슈머 그룹</span></div>
+          <div class="node"><b>라이선스 토픽</b><span>파티션 2개</span></div>
+          <div class="ch-join"><span>복제 2</span></div>
+          <div class="ch-loops">
+            <div><em>브로커 1</em><span>파티션 0 · 1 보관</span></div>
+            <div><em>브로커 2</em><span>파티션 0 · 1 보관</span></div>
+          </div>
+        </div>
+        <div class="tx-compare linked">
+          <div class="tx-col">
+            <p class="tx-label ok">평시 · 파티션을 하나씩</p>
+            <div class="tx-outer split">
+              <div class="tx-step ok">
+                <em>파티션 0</em>
+                <b>녹취 엔진 1</b>
+                <span>이 파티션 메시지만 발급 · 검증</span>
+              </div>
+              <div class="tx-step ok">
+                <em>파티션 1</em>
+                <b>녹취 엔진 2</b>
+                <span>이 파티션 메시지만 발급 · 검증</span>
+              </div>
+            </div>
+          </div>
+          <div class="tx-col">
+            <p class="tx-label ok">한 대가 내려간 뒤</p>
+            <div class="tx-outer base">
+              <div class="tx-step">
+                <em>엔진 1 중단</em>
+                <b>파티션 0 → 엔진 2</b>
+                <span>남은 엔진이 두 파티션을 이어 받음</span>
+              </div>
+              <div class="tx-step">
+                <em>브로커 1 중단</em>
+                <b>브로커 2의 복제본</b>
+                <span>토픽이 남아 발행 · 구독이 이어짐</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="spec">
+          <div>
+            <em>같은 컨슈머 그룹</em>
+            <p>서버마다 세면 그 서버 개수만 나옵니다. 그룹 하나에서 메시지를 나눠 받으면 클러스터 전체의 절대 개수가 되고, 같은 건은 한 엔진만 처리합니다.</p>
+          </div>
+          <div>
+            <em>파티션 2</em>
+            <p>건수와 메시지 크기가 작아 파티션은 엔진 대수와 같게 2입니다. 엔진마다 파티션 하나를 맡아 두 대가 함께 처리합니다.</p>
+          </div>
+          <div>
+            <em>replication factor 2</em>
+            <p>브로커가 1·2로 이중화되어 있어 복제도 2입니다. 파티션이 양쪽 브로커에 남아, 브로커 한 대가 내려가도 토픽이 유지됩니다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="trouble">
+        <div class="num">04</div>
+        <h2>트러블슈팅</h2>
+
+        <article class="case">
+          <h3><span>01</span>중계 프록시 세션이 주기적으로 끊김</h3>
+          <div class="ps">
+            <div class="ps-row"><b>문제</b><p>녹취 업로드 중 중계망 프록시에서 <code>idle timeout</code>이 처리되지 않아 세션이 주기적으로 끊겼습니다.</p></div>
+            <div class="ps-row"><b>원인</b><p>유휴 연결에 대한 <code>timeout</code> 처리가 없어, 잠시 데이터가 없으면 세션이 종료됐습니다.</p></div>
+            <div class="ps-row"><b>해결</b><p>태블릿 때 만든 Proxy를 수정해 <code>timeout</code>을 처리하고, <strong>ping-pong</strong>으로 유휴 세션을 유지했습니다.</p></div>
+            <div class="ps-row result"><b>결과</b><p>업로드 세션이 주기적으로 끊기지 않게 됐습니다.</p></div>
+          </div>
+        </article>
+
+        <article class="case">
+          <h3><span>02</span>세션 참조가 남아 힙 메모리가 초과됨</h3>
+          <div class="ps">
+            <div class="ps-row"><b>문제</b><p>멀티스레드로 TCP·WebSocket 세션을 함께 관리하면서, 객체 참조와 정리되지 않은 세션 때문에 <code>OOM</code>이 자주 발생했습니다.</p></div>
+            <div class="ps-row"><b>원인</b><p>연결이 끝난 세션과 버퍼 참조가 스레드마다 남아 힙이 계속 늘었습니다. Netty 버퍼는 <code>release</code>하지 않으면 회수되지 않습니다.</p></div>
+            <div class="ps-row"><b>해결</b><p>세션 보관소를 <strong>싱글톤</strong>으로 두고, 채널이 닫힐 때 세션을 빼도록 구조를 다시 짰습니다. <code>ChannelGroup</code>이 닫힌 채널을 스스로 제거하고, 받은 버퍼는 <code>release</code>로 참조를 놓습니다. JVM 힙도 함께 늘렸습니다.</p></div>
+            <div class="ps-row result"><b>결과</b><p>힙을 늘린 상태에서, 참조가 쌓이던 기존 <code>OOM</code>은 다시 발생하지 않았습니다.</p></div>
+          </div>
+        </article>
+      </section>
+
+      <section id="results">
+        <div class="num">05</div>
+        <h2>핵심성과</h2>
+        <div class="results">
+          <article class="result-card">
+            <em>세션</em>
+            <b>업로드가 중간에 끊기지 않음</b>
+            <div class="did">
+              <span>한 일</span>
+              <p>태블릿 때 만든 Proxy에 <code>idle timeout</code> 처리와 <code>ping-pong</code>을 넣었습니다.</p>
+            </div>
+            <div class="got">
+              <span>개선</span>
+              <p>녹취 업로드 중 데이터가 잠시 없어도 세션이 주기적으로 끊기지 않습니다.</p>
+            </div>
+          </article>
+          <article class="result-card">
+            <em>메모리</em>
+            <b>반복되던 OOM이 다시 발생하지 않음</b>
+            <div class="did">
+              <span>한 일</span>
+              <p>세션 보관소를 싱글톤으로 두고, 닫힌 채널은 <code>ChannelGroup</code>이 빼고 버퍼는 <code>release</code>하게 했습니다. JVM 힙도 함께 늘렸습니다.</p>
+            </div>
+            <div class="got">
+              <span>개선</span>
+              <p>끝난 TCP·WebSocket 세션이 힙에 쌓이던 기존 <code>OOM</code>은 다시 발생하지 않았습니다.</p>
+            </div>
+          </article>
+          <article class="result-card">
+            <em>집계</em>
+            <b>두 서버의 라이선스를 한 개수로</b>
+            <div class="did">
+              <span>한 일</span>
+              <p>엔진 1·2의 발급·반납을 같은 컨슈머 그룹의 Kafka 토픽으로 모았습니다.</p>
+            </div>
+            <div class="got">
+              <span>개선</span>
+              <p>서버가 달라도 클러스터 전체의 라이선스 절대 개수를 한곳에서 셉니다.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+    </div>
+    <script>
+      const links = [...document.querySelectorAll(".toc nav a")];
+      const sections = links.map((a) => document.querySelector(a.getAttribute("href")));
+      let lockUntil = 0;
+      const mark = (id) =>
+        links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === `#${id}`));
+      const setActive = () => {
+        if (Date.now() < lockUntil) return;
+        const y = window.scrollY + 120;
+        let current = sections[0];
+        for (const s of sections) if (s.getBoundingClientRect().top + window.scrollY <= y) current = s;
+        mark(current.id);
+      };
+      links.forEach((a) =>
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = document.querySelector(a.getAttribute("href"));
+          mark(target.id);
+          lockUntil = Date.now() + 900;
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          history.replaceState(null, "", a.getAttribute("href"));
+        })
+      );
+      window.addEventListener("scroll", setActive, { passive: true });
+      setActive();
+    </script>
+  </body>
+</html>

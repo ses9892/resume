@@ -111,20 +111,39 @@
         <h2>일하는 방식<span class="dot">.</span></h2>
         <ul class="ways">
           <li>
-            <strong>합의된 문서로 시작합니다</strong>
-            <p>ERD·인터페이스 정의서로 연동 범위와 규격을 원청사·현업과 먼저 맞춘 뒤 개발에 들어갑니다.</p>
+            <strong>프로세스를 지키고, 테스트로 증명합니다</strong>
+            <p>
+              요구사항을 문서로 합의하고 인터페이스를 정한 뒤, <b>실패하는 테스트로 기대 동작을 먼저 고정</b>하고 구현합니다.
+              금융권에서는 ERD·인터페이스 정의서로 연동 규격부터 맞췄고, 지금은 요구사항 → 인터페이스 → 구현 플랜 → 검증 보고 순서를 따릅니다.
+              테스트는 개수보다 의미를 봅니다. 의미 없는 Mock 테스트는 걷어내고, 깨지면 안 되는 연동과 도구 계약을 테스트로 지킵니다.
+            </p>
           </li>
           <li>
-            <strong>운영까지 보고 설계합니다</strong>
-            <p>배포 경로, 로그, 장애 대응을 개발 단계에서 함께 준비해 오픈 이후에도 안정적으로 돌아가게 만듭니다.</p>
+            <strong>로그를 기능과 함께 설계합니다</strong>
+            <p>
+              금융권 프로젝트에서 원청사·은행과 문제 구간을 가릴 때 근거는 결국 로그였습니다.
+              로그가 섞이던 녹취 시스템은 <b>AOP로 인터페이스 수신 로그를 분류</b>해 grep으로 바로 찾게 했고,
+              끊기던 중계 구간은 양방향 로그로 timeout 미처리 지점을 찾았습니다.
+              그래서 기능을 만들 때 장애가 나면 무엇으로 찾을지를 함께 정하고, 지금은 Agent 요청도 LangSmith trace와 Grafana·Loki로 추적합니다.
+            </p>
           </li>
           <li>
-            <strong>원인까지 추적합니다</strong>
-            <p>통신 모듈별 로그로 문제 구간을 좁혀 재현하고, 증상이 아닌 근본 원인을 고칩니다.</p>
+            <strong>Agent를 적극적으로 쓰되, 프로세스는 지킵니다</strong>
+            <p>
+              Claude Code·Cursor 같은 코딩 Agent를 매일 쓰지만, Agent에게도 사람과 같은 절차를 요구합니다.
+              요구사항 문서 없이 구현을 시작하지 않고, <b>'테스트했다'는 말 대신 실행 로그를 완료 근거로</b> 남기게 합니다.
+              이를 위해 TDD·플랜 작성·완료 전 검증 같은 Agent Skill을 팀 저장소에 도입하고,
+              MCP 도구 호출·vCenter 운영처럼 사내 업무에 맞는 스킬은 직접 만들었습니다.
+            </p>
           </li>
           <li>
-            <strong>반복되는 일은 자동화합니다</strong>
-            <p>CI/CD, 배치, Agent 기반 업무 AX와 AI 개발 도구 도입으로 사람이 하던 반복 작업을 줄입니다.</p>
+            <strong>혼자 잘 쓰는 것보다, 팀이 함께 쓰게 만듭니다</strong>
+            <p>
+              Agent는 주어진 맥락만큼 일합니다. 그래서 아키텍처 문서·용어집·전역 지침을 정비해
+              <b>누가 Agent를 쓰든 같은 맥락에서 작업</b>하게 했고, 스킬과 바이브코딩 개발 방식을 팀원들과 공유하며
+              인사업무 AX처럼 개발 밖의 사내 업무로 넓히고 있습니다.
+              모호한 요구는 코드보다 대화로 먼저 풀고, 합의한 내용은 문서로 남깁니다.
+            </p>
           </li>
         </ul>
       </section>
@@ -140,39 +159,39 @@
           </div>
 
           <div class="projects">
-            <div class="project">
+            <div class="project linked">
+              <span class="row-arrow" aria-hidden="true"></span>
               <div class="project-head">
-                <h4>사내 인사업무 AX화</h4>
-                <span class="period">2026.06 – 2026.08</span>
+                <h4><a href="./projects/recruit-agent.html">사내 인사업무 AX화</a></h4>
+                <span class="period">2026.06 – 진행 중</span>
               </div>
-              <p>사내규정·면접채용·교육온보딩 업무를 처리하는 인사업무 Agent 백엔드 및 연동 API 개발</p>
+              <p>채용 서류 평가·면접 질문 준비를 돕는 역할별 Agent와 후보자 위키 개발</p>
               <ul>
-                <li><strong>사내규정 문서 검색·질의응답 Tool</strong> 및 답변 근거 제공 로직 개발</li>
-                <li>면접·채용 프로세스 업무 API 개발 및 Agent Tool 연동</li>
-                <li>에이전트 워크플로우 기반 교육 온보딩 단계별 안내 구현</li>
-                <li>업무별 프롬프트 설계, Tool 호출 검증 및 실제 업무 적용 테스트</li>
-                <li>Docker 컨테이너 기반 서비스 구성 및 사내 서버 배포</li>
+                <li>이력서를 <strong>후보자 위키</strong>로 한 번 정리하고, 필요한 카드만 꺼내 봄</li>
+                <li>서류 AI 평가는 위키 근거로 평가서를 쓰고, 근거가 없으면 실패로 기록</li>
+                <li>면접 도우미는 질문 의도에 따라 평가표와 후보자 위키 중 필요한 쪽만 조회</li>
+                <li>업무별 프롬프트 설계와 Tool 입력·반환 검증</li>
               </ul>
               <div class="tags">
-                <span>Python</span><span>LangChain</span><span>LangGraph</span><span>React</span><span>PostgreSQL</span><span>Docker</span>
+                <span>Python</span><span>LangChain</span><span>LangGraph</span><span>Spring</span><span>MCP</span>
               </div>
             </div>
 
-            <div class="project">
+            <div class="project linked">
+              <span class="row-arrow" aria-hidden="true"></span>
               <div class="project-head">
-                <h4>SeedAI Agent 개발</h4>
+                <h4><a href="./projects/seedai-agent.html">SeedAI Agent 개발</a></h4>
                 <span class="period">2025.10 – 2026.05</span>
               </div>
-              <p>Agent 플랫폼의 대화·컨텍스트·Tool·지식 검색 백엔드 설계 및 개발</p>
+              <p>Agent 플랫폼의 토큰 미터링·문서 분석·지식 검색 백엔드와 배포 환경</p>
               <ul>
-                <li>Conversation 세션·메시지 이력 저장 구조 설계 및 대화 API 개발</li>
-                <li>장기 대화 컨텍스트 압축(Compact) 로직 개발로 토큰 사용량 관리</li>
-                <li>Tool 등록·호출·결과 처리 구조 개발 및 업무 시스템 연동</li>
-                <li><strong>RAG 문서 수집·청킹·임베딩·검색 파이프라인</strong>, LLM-WIKI 기반 개인·사내 지식 검색 개발</li>
-                <li>Docker Compose 기반 개발·운영 환경 구성 및 서비스 배포</li>
+                <li><strong>요청 단위 LLM 토큰 미터링</strong>과 비용·월 쿼터</li>
+                <li>문서 파싱 후 요약·구간 추출로 이어지는 분석 워크플로우</li>
+                <li>RAG 청킹·임베딩 검색과 <strong>OKF 개인 위키</strong></li>
+                <li>Docker Compose 개발 기동, Jenkins 에이전트 배포 패키징</li>
               </ul>
               <div class="tags">
-                <span>Python</span><span>LangChain</span><span>LangGraph</span><span>PostgreSQL</span><span>Docker</span>
+                <span>Python</span><span>LangChain</span><span>LangGraph</span><span>Docker</span><span>Jenkins</span>
               </div>
             </div>
 
@@ -220,18 +239,19 @@
           </div>
 
           <div class="projects">
-            <div class="project">
+            <div class="project linked">
+              <span class="row-arrow" aria-hidden="true"></span>
               <div class="project-head">
-                <h4>우리은행 ODS AI 화자분리 파이프라인 구축</h4>
+                <h4><a href="./projects/woori-speaker.html">우리은행 ODS AI 화자분리 파이프라인 구축</a></h4>
                 <span class="period">2024.01 – 2024.07 · 퓨렌스 자체</span>
               </div>
               <p>모바일 녹취 음성의 화자분리·저장·분석으로 이어지는 음성 데이터 인터페이스 엔진 개발</p>
               <ul>
                 <li><strong>Netty 기반 음성 데이터 수신 인터페이스 엔진</strong> 개발</li>
-                <li>화자분리 → 녹취 저장 → STT·TA 연계 워크플로우를 Kafka 비동기 처리로 개발</li>
-                <li>Python 화자분리 모듈과 WebSocket 연동</li>
+                <li>화자분리 서버 2대 Round Robin 라우팅과 STT TCP(start·end·connection) 전송</li>
+                <li>Python 모델 연동, STT 결과는 Kafka로 받아 웹뷰 WebSocket으로 전달</li>
                 <li>타 서비스 연동 및 내부 시스템 인터페이스 정의</li>
-                <li>Kafka 토픽·컨슈머 그룹 구성 및 Linux 운영 서버 환경 구성</li>
+                <li>같은 컨슈머 그룹으로 라이선스 토픽 이중화 및 Linux 운영 환경 구성</li>
               </ul>
               <div class="tags">
                 <span>Netty</span><span>WebSocket</span><span>Kafka</span><span>Python</span><span>Linux</span>
@@ -255,9 +275,10 @@
               </div>
             </div>
 
-            <div class="project">
+            <div class="project linked">
+              <span class="row-arrow" aria-hidden="true"></span>
               <div class="project-head">
-                <h4>KB증권 AI기반 금융상담 시스템 구축</h4>
+                <h4><a href="./projects/kb-realtime-voice.html">KB증권 AI기반 금융상담 시스템 구축</a></h4>
                 <span class="period">2023.04 – 2024.01 · ECS 연계</span>
               </div>
               <p>상담 음성 실시간 전송 서버 개발 및 관련 인프라 구축</p>

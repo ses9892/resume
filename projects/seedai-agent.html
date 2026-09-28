@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SeedAI Agent 개발</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css"
+    />
+    <link rel="stylesheet" href="./project.css" />
+    <style>
+      .toc-label {
+        letter-spacing: 0;
+        text-transform: none;
+      }
+
+      .page :not(pre) > code {
+        font-family: inherit;
+        font-size: 0.92em;
+        font-weight: 600;
+        letter-spacing: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+    <aside class="toc">
+      <a class="back" href="../index.html">← 이력서로 돌아가기</a>
+      <p class="toc-kicker">경력기술서</p>
+      <p class="toc-title">SeedAI Agent 개발</p>
+      <p class="toc-meta">2025.10 – 2026.05 · 디포커스</p>
+      <nav>
+        <p class="toc-label">목차</p>
+        <a href="#platform"><span>00</span>배경</a>
+        <a href="#metering"><span>01</span>토큰 미터링</a>
+        <a href="#document"><span>02</span>문서 분석</a>
+        <a href="#wiki"><span>03</span>LLM-WIKI</a>
+        <a href="#results"><span>04</span>핵심성과</a>
+      </nav>
+    </aside>
+
+    <main class="page">
+      <p class="kicker">경력기술서 · 2025.10 – 2026.05 · 디포커스</p>
+      <h1>SeedAI Agent 개발</h1>
+      <p class="meta">토큰 미터링 · 문서 분석 · RAG / LLM-WIKI</p>
+      <p class="lead">
+        사내 Agent 플랫폼에서 비용 측정, 문서 읽기, 지식 검색을 맡아 개발했습니다.
+        작업마다 왜 그렇게 나눴는지와 실제로 도는 순서를 그렸습니다. 파란 칸이 직접 구현한 부분입니다.
+      </p>
+      <div class="chips">
+        <span>Python</span>
+        <span>LangChain</span>
+        <span>LangGraph</span>
+        <span>Spring</span>
+        <span>MSSQL</span>
+        <span>Qdrant</span>
+        <span>Docker</span>
+      </div>
+
+      <section id="platform">
+        <div class="num">00</div>
+        <h2>배경 및 플랫폼 구조</h2>
+        <div class="purpose">
+          <p class="tag">프로젝트 목적</p>
+          <p>SeedAI는 개발자가 코드를 매번 작성하지 않고 Agent를 구성해 실행하는 사내 플랫폼입니다. 사용자는 포탈에서 대화하고, 요청은 게이트웨이를 거쳐 Agent로 들어가며, 설정과 이력은 API와 DB에 남습니다. 이 실행 구간에 비용 측정, 문서 분석, 지식 검색을 붙였습니다.</p>
+        </div>
+        <div class="fd">
+          <div class="fd-top">
+            <span>플랫폼 구조</span>
+            <span class="fd-badge plain">파란 칸이 직접 구현</span>
+          </div>
+          <div class="fd-body">
+            <div class="fd-step">
+              <small>화면</small>
+              <b>사용자 포탈 · 어드민 콘솔</b>
+              <span>대화 · Agent 관리</span>
+            </div>
+            <div class="fd-link"><span>WebSocket · REST</span></div>
+            <div class="fd-step">
+              <small>게이트웨이 :8010 · :8040</small>
+              <b>로그인 확인 후 서버로 전달</b>
+              <span>Keycloak 로그인 · 대화 스트리밍 중계</span>
+            </div>
+            <div class="fd-link split"><span>서버 호출</span></div>
+            <div class="fd-branch merge">
+              <div class="fd-col">
+                <span class="fd-tag amber">설정 · 이력</span>
+                <div class="fd-step">
+                  <small>API :8030 · :8050</small>
+                  <b>Agent 설정 · 대화 이력 · 사용량</b>
+                </div>
+              </div>
+              <div class="fd-col">
+                <span class="fd-tag blue">답변 생성</span>
+                <div class="fd-step blue">
+                  <small>Agent :8000</small>
+                  <b>01 미터링 · 02 문서 분석 · 03 위키</b>
+                </div>
+              </div>
+            </div>
+            <div class="fd-link split"><span>저장</span></div>
+            <div class="fd-branch" style="--cols: 3">
+              <div class="fd-col">
+                <span class="fd-tag amber">메타</span>
+                <div class="fd-step">
+                  <b>MSSQL</b>
+                  <span>설정 · 이력 · 사용량</span>
+                </div>
+              </div>
+              <div class="fd-col">
+                <span class="fd-tag violet">문단</span>
+                <div class="fd-step violet">
+                  <b>Qdrant</b>
+                  <span>RAG 청크</span>
+                </div>
+              </div>
+              <div class="fd-col">
+                <span class="fd-tag blue">개인 지식</span>
+                <div class="fd-step blue">
+                  <b>wiki/</b>
+                  <span>OKF 묶음</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fd-note">
+            <strong>범위:</strong> 화면, 게이트웨이, 로그인, DB는 기존 플랫폼입니다.
+            직접 구현한 것은 Agent 실행에 붙인 비용 측정, 문서 분석, 지식 검색과 그 저장입니다.
+          </div>
+        </div>
+      </section>
+
+      <section id="metering">
+        <div class="num">01</div>
+        <h2>토큰 사용량 미터링</h2>
+        <div class="purpose">
+          <p class="tag">설계 관점</p>
+          <p>컨텍스트를 줄이려고 세던 추정 토큰은 비용과 한도에 쓸 수 없었습니다. 한 요청 안에도 본 답변, 도구 결과를 들고 다시 부른 호출, 서브에이전트가 섞여 있어 호출마다 저장하면 건수가 부풉니다. 그래서 실제 사용량은 호출이 끝날 때 모으고, 비용 계산과 저장은 요청이 끝난 뒤 한 번만 하게 했습니다. 진행 중인 답을 끊지 않으려고 한도는 다음 요청에서 봅니다.</p>
+        </div>
+        <div class="fd-compare">
+          <div class="fd">
+            <div class="fd-top">
+              <span>기존 · 추정치를 호출마다</span>
+              <span class="fd-badge">건수가 부풂</span>
+            </div>
+            <div class="fd-body">
+              <div class="fd-step">
+                <small>입력</small>
+                <b>사용자 요청 1건</b>
+              </div>
+              <div class="fd-link"><span>안에서 여러 번 호출</span></div>
+              <div class="fd-step amber">
+                <small>LLM 호출 N번</small>
+                <b>본 답변 · 도구 재호출 · 서브에이전트</b>
+                <span>세는 값은 추정 토큰</span>
+              </div>
+              <div class="fd-link"><span>호출마다 저장</span></div>
+              <div class="fd-step warn">
+                <small>문제</small>
+                <b>요청 1건이 여러 건으로</b>
+                <span>비용과 한도를 판단할 수 없음</span>
+              </div>
+            </div>
+          </div>
+          <div class="fd">
+            <div class="fd-top">
+              <span>개선 · 실측을 모아 한 번</span>
+              <span class="fd-badge solved">요청당 1건</span>
+            </div>
+            <div class="fd-body">
+              <div class="fd-step">
+                <small>입력</small>
+                <b>사용자 요청 1건</b>
+              </div>
+              <div class="fd-link"><span>호출이 끝날 때마다</span></div>
+              <div class="fd-step blue">
+                <small>Agent</small>
+                <b>실측 토큰만 모아 둠</b>
+                <span>이 동안에는 저장하지 않음</span>
+              </div>
+              <div class="fd-link"><span>요청이 끝나면 1회</span></div>
+              <div class="fd-step green">
+                <small>저장</small>
+                <b>요청 1행 + 호출 N행</b>
+                <span>비용은 이때 한 번 계산</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fd">
+          <div class="fd-top">
+            <span>미터링 동작</span>
+            <span class="fd-badge solved">한도 확인 → 실측 → 1회 저장</span>
+          </div>
+          <div class="fd-body">
+            <div class="fd-step blue">
+              <small>Step 1 · 요청 시작 · Agent → API</small>
+              <b>이번 달 사용 비용을 먼저 확인</b>
+              <span>사용자 × 앱 기준 · 넘으면 대화는 QUOTA_EXCEEDED, REST는 429</span>
+            </div>
+            <div class="fd-link split"><span>실행 중 · 호출이 끝날 때마다</span></div>
+            <div class="fd-branch merge" style="--cols: 4; max-width: 46rem">
+              <div class="fd-col">
+                <span class="fd-tag blue">본 답변</span>
+                <div class="fd-step">
+                  <b>사용자에게 가는 답</b>
+                </div>
+              </div>
+              <div class="fd-col">
+                <span class="fd-tag blue">도구 재호출</span>
+                <div class="fd-step">
+                  <b>도구 결과를 들고 다시</b>
+                </div>
+              </div>
+              <div class="fd-col">
+                <span class="fd-tag violet">서브에이전트</span>
+                <div class="fd-step">
+                  <b>그 안의 LLM 호출</b>
+                </div>
+              </div>
+              <div class="fd-col">
+                <span class="fd-tag amber">보조 LLM</span>
+                <div class="fd-step">
+                  <b>요약 · 압축 등</b>
+                </div>
+              </div>
+            </div>
+            <div class="fd-link"><span>요청 종료 · 한 번만</span></div>
+            <div class="fd-step blue">
+              <small>Step 2 · 비용 확정 · API</small>
+              <b>입력 · 출력 토큰에만 단가를 곱함</b>
+              <span>100만 토큰당 USD · 캐시 · 추론 토큰은 기록만</span>
+            </div>
+            <div class="fd-link"><span>저장</span></div>
+            <div class="fd-step green">
+              <small>Step 3 · MSSQL</small>
+              <b>요청 1행 + 호출 N행</b>
+              <span>같은 요청 번호로 최초 1건만 · 재시도가 건수를 늘리지 않음</span>
+            </div>
+          </div>
+          <div class="fd-note">
+            <strong>핵심:</strong> 호출 중에는 모으기만 하고, 저장과 비용 계산은 요청이 끝날 때 한 번입니다.
+            모델이 사용량을 주지 않으면 추정값을 남기고 “추정” 표시를 붙여 실측과 섞이지 않게 했습니다.
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><b>요청당 1회</b><span>호출 수와 관계없이 저장 한 번</span></div>
+          <div class="stat"><b>호출 4종</b><span>본 답변 · 재호출 · 서브 · 보조</span></div>
+          <div class="stat"><b>단가</b><span>입력 · 출력만 USD</span></div>
+          <div class="stat"><b>월 한도</b><span>다음 요청부터 차단</span></div>
+        </div>
+      </section>
+
+      <section id="document">
+        <div class="num">02</div>
+        <h2>문서 분석·요약</h2>
+        <div class="purpose">
+          <p class="tag">설계 관점</p>
+          <p>요약만 필요한 Agent에 지식 등록까지 붙으면 권한이 넓어집니다. 긴 문서를 통째로 넣으면 토큰만 늘고 어느 구간에서 답을 냈는지 흐려집니다. 그래서 파싱, 추출, 요약을 다른 호출로 두고, 분석가는 목차를 본 다음 필요한 구간만 읽게 했습니다. 등록 도구는 지식을 남기는 흐름에만 둡니다.</p>
+        </div>
+        <div class="fd">
+          <div class="fd-top">
+            <span>문서 분석 동작</span>
+            <span class="fd-badge solved">추출과 요약을 다른 호출로</span>
+          </div>
+          <div class="fd-body">
+            <div class="fd-step">
+              <small>Step 1 · 업로드</small>
+              <b>파싱 워커가 텍스트로 변환</b>
+              <span>이 단계에서는 요약하지 않음</span>
+            </div>
+            <div class="fd-link"><span>대화에서 필요할 때</span></div>
+            <div class="fd-step blue">
+              <small>Step 2 · 부모 Agent</small>
+              <b>문서 일을 서브에이전트에 맡김</b>
+              <span>문서 전체를 자기 컨텍스트에 올리지 않음</span>
+            </div>
+            <div class="fd-link split"><span>질문에 따라</span></div>
+            <div class="fd-branch merge">
+              <div class="fd-col">
+                <span class="fd-tag blue">본문이 필요하면</span>
+                <div class="fd-step blue">
+                  <small>파서</small>
+                  <b>본문만 추출</b>
+                  <span>해석 · 요약 없이 원문 구조</span>
+                </div>
+              </div>
+              <div class="fd-col">
+                <span class="fd-tag green">요약 · 질문이면</span>
+                <div class="fd-step green">
+                  <small>분석가</small>
+                  <b>목차를 보고 구간만 읽음</b>
+                  <span>등록 도구 없음</span>
+                </div>
+              </div>
+            </div>
+            <div class="fd-link"><span>결과만 돌려줌</span></div>
+            <div class="fd-step">
+              <small>Step 3 · 부모 Agent</small>
+              <b>받은 본문 · 요약으로 답변</b>
+            </div>
+          </div>
+        </div>
+        <div class="fd-compare">
+          <div class="fd">
+            <div class="fd-top">
+              <span>파서 안</span>
+              <span class="fd-badge plain">답하지 않고 본문만</span>
+            </div>
+            <div class="fd-body">
+              <div class="fd-step">
+                <small>1 · 스캔</small>
+                <b>글자 레이어부터 읽음</b>
+                <span>표 · 차트 · 그림은 보류 목록에</span>
+              </div>
+              <div class="fd-link split"><span>페이지마다</span></div>
+              <div class="fd-branch merge">
+                <div class="fd-col">
+                  <span class="fd-tag green">글자 있음</span>
+                  <div class="fd-step green">
+                    <b>그대로 사용</b>
+                  </div>
+                </div>
+                <div class="fd-col">
+                  <span class="fd-tag violet">스캔 · 빈 표</span>
+                  <div class="fd-step violet">
+                    <b>그 부분만 비전</b>
+                  </div>
+                </div>
+              </div>
+              <div class="fd-link"><span>합치기</span></div>
+              <div class="fd-step blue">
+                <small>2 · 반환</small>
+                <b>마크다운 합본</b>
+                <span>아이콘은 [검색]처럼 한글로 남김</span>
+              </div>
+            </div>
+          </div>
+          <div class="fd">
+            <div class="fd-top">
+              <span>분석가 안</span>
+              <span class="fd-badge plain">숲을 보고 나무로</span>
+            </div>
+            <div class="fd-body">
+              <div class="fd-step">
+                <small>1 · 숲</small>
+                <b>전체 요약과 목차 먼저</b>
+                <span>특정 페이지부터 열지 않음</span>
+              </div>
+              <div class="fd-link"><span>어디를 읽을지 결정</span></div>
+              <div class="fd-step green">
+                <small>2 · 나무</small>
+                <b>요약에 없는 숫자 · 조항만</b>
+                <span>그 절 · 페이지 범위만 다시 읽음</span>
+              </div>
+              <div class="fd-link"><span>합쳐서</span></div>
+              <div class="fd-step blue">
+                <small>3 · 반환</small>
+                <b>요약 + 그 구간만</b>
+                <span>요약에 없는 값은 추측하지 않음</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="stat"><b>파서</b><span>본문만 · 요약 안 함</span></div>
+          <div class="stat"><b>비전</b><span>스캔본 · 빈 표 부분만</span></div>
+          <div class="stat"><b>분석가</b><span>목차 → 필요한 구간</span></div>
+          <div class="stat"><b>등록 도구 3종</b><span>지식을 남기는 흐름에만</span></div>
+        </div>
+      </section>
+
+      <section id="wiki">
+        <div class="num">03</div>
+        <h2>LLM-WIKI · RAG</h2>
+        <div class="purpose">
+          <p class="tag">설계 관점</p>
+          <p>청크 검색은 비슷한 문단은 찾지만, 개념이 문서를 넘어 이어지면 출처가 끊깁니다. 개인 문서를 매번 통째로 넣는 것도 쌓일수록 불가능합니다. 그래서 개인 지식은 OKF로 정리하고, 목차를 입구로 필요한 카드만 읽게 했습니다. 문단이 필요한 전사 검색은 RAG에 남겼습니다.</p>
+        </div>
+        <div class="fd-compare">
+          <div class="fd">
+            <div class="fd-top">
+              <span>RAG · 이번 답변의 문단</span>
+              <span class="fd-badge plain">전사 문서</span>
+            </div>
+            <div class="fd-body">
+              <div class="fd-step">
+                <small>입력</small>
+                <b>문서 등록</b>
+              </div>
+              <div class="fd-link"><span>1,000토큰씩 · 100 겹침</span></div>
+              <div class="fd-step blue">
+                <small>적재</small>
+                <b>청크 나누기 · 임베딩</b>
+              </div>
+              <div class="fd-link"><span>저장</span></div>
+              <div class="fd-step violet">
+                <small>Qdrant</small>
+                <b>키워드 + 벡터 색인</b>
+              </div>
+              <div class="fd-link"><span>질문이 오면</span></div>
+              <div class="fd-step blue">
+                <small>RAG 검색 도구</small>
+                <b>두 순위를 합쳐 상위 문단</b>
+              </div>
+            </div>
+          </div>
+          <div class="fd">
+            <div class="fd-top">
+              <span>LLM-WIKI · 이어서 보는 지식</span>
+              <span class="fd-badge solved">개인 지식</span>
+            </div>
+            <div class="fd-body">
+              <div class="fd-step">
+                <small>입력</small>
+                <b>원문 반입</b>
+              </div>
+              <div class="fd-link"><span>정리</span></div>
+              <div class="fd-step blue">
+                <small>쓰는 Agent</small>
+                <b>목차 · 개념 · 카드 · 이력</b>
+              </div>
+              <div class="fd-link"><span>저장</span></div>
+              <div class="fd-step violet">
+                <small>OKF 묶음</small>
+                <b>사용자 1명당 하나</b>
+              </div>
+              <div class="fd-link"><span>질문이 오면</span></div>
+              <div class="fd-step blue">
+                <small>찾는 Agent</small>
+                <b>목차 → 개념 → 카드만 읽음</b>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="arch">
+          <div class="arch-bar">
+            <span>저장과 검색이 다름</span>
+            <span class="arch-hint">OKF는 목차부터 필요한 카드만</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>RAG</th>
+                <th>LLM-WIKI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>쓰는 곳</td>
+                <td>이번 답변에 넣을 문단</td>
+                <td>개인 지식을 이어서 읽기</td>
+              </tr>
+              <tr>
+                <td>가공</td>
+                <td>1,000토큰 청크, 100토큰 겹침, 임베딩</td>
+                <td>목차 · 개념 페이지 · 카드 · 갱신 이력</td>
+              </tr>
+              <tr>
+                <td>저장</td>
+                <td>RDB 메타 + Qdrant</td>
+                <td>원문 폴더 + 위키 폴더</td>
+              </tr>
+              <tr>
+                <td>찾는 법</td>
+                <td>키워드와 벡터 순위를 합침</td>
+                <td>목차 → 개념 → 카드. 고른 파일만 읽음</td>
+              </tr>
+              <tr>
+                <td>범위</td>
+                <td>워크스페이스 문서, 전사 검색</td>
+                <td>사용자 1명당 위키 1개</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="arch-foot">
+            OKF(Open Knowledge Format)는 지식을 벡터가 아니라 마크다운 묶음으로 둡니다.
+            <code>index.md</code>가 목차, 개념 페이지가 허브, <code>log.md</code>가 갱신 이력이고, 카드끼리는 위키 링크로 잇습니다.
+            실제로 있는 파일 목록을 먼저 보고 연 파일만 근거로 남깁니다.
+          </div>
+        </div>
+      </section>
+
+      <section id="results">
+        <div class="num">04</div>
+        <h2>핵심성과</h2>
+        <div class="results">
+          <article class="result-card">
+            <em>사용량</em>
+            <b>요청이 끝난 뒤에만 비용을 확정</b>
+            <div class="did">
+              <span>한 일</span>
+              <p>호출이 끝날 때마다 실측 토큰을 모으고, 요청이 끝나면 한 번에 넘겨 입력·출력 단가만 USD로 남겼습니다.</p>
+            </div>
+            <div class="got">
+              <span>개선</span>
+              <p>추정 토큰과 스트리밍의 빈 사용량으로는 한도를 걸 수 없었습니다. 월 쿼터는 이 비용으로 다음 요청을 판단합니다.</p>
+            </div>
+          </article>
+          <article class="result-card">
+            <em>문서</em>
+            <b>추출과 요약을 다른 호출로</b>
+            <div class="did">
+              <span>한 일</span>
+              <p>파서는 본문만 만들고, 분석가는 목차를 본 다음 필요한 구간만 읽어 부모 Agent에게 돌려줍니다.</p>
+            </div>
+            <div class="got">
+              <span>개선</span>
+              <p>요약만 필요한 Agent에 등록 권한이 붙지 않습니다. 긴 문서 전체를 컨텍스트에 올리지 않아도 답이 나옵니다.</p>
+            </div>
+          </article>
+          <article class="result-card">
+            <em>지식</em>
+            <b>한 답에 문단과 개념 경로</b>
+            <div class="did">
+              <span>한 일</span>
+              <p>같은 질문에 RAG 문단과 OKF 카드를 같이 붙여, 부모 Agent가 둘을 한 답으로 합치게 했습니다.</p>
+            </div>
+            <div class="got">
+              <span>개선</span>
+              <p>가까운 문단은 청크로, 개념이 이어지는 경로와 근거 파일은 OKF로 남습니다. 둘 중 하나만 넣을 때 빠지던 쪽이 답에 같이 들어갑니다.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+    </div>
+    <script>
+      const links = [...document.querySelectorAll(".toc nav a")];
+      const sections = links.map((a) => document.querySelector(a.getAttribute("href")));
+      let lockUntil = 0;
+      const mark = (id) =>
+        links.forEach((a) => a.classList.toggle("active", a.getAttribute("href") === `#${id}`));
+      const setActive = () => {
+        if (Date.now() < lockUntil) return;
+        const y = window.scrollY + 120;
+        let current = sections[0];
+        for (const s of sections) if (s.getBoundingClientRect().top + window.scrollY <= y) current = s;
+        mark(current.id);
+      };
+      links.forEach((a) =>
+        a.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = document.querySelector(a.getAttribute("href"));
+          mark(target.id);
+          lockUntil = Date.now() + 900;
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          history.replaceState(null, "", a.getAttribute("href"));
+        })
+      );
+      window.addEventListener("scroll", setActive, { passive: true });
+      setActive();
+    </script>
+  </body>
+</html>

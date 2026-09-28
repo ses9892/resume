@@ -52,6 +52,10 @@
       <section id="arch">
         <div class="num">00</div>
         <h2>같은 인프라, 다른 구현</h2>
+        <div class="purpose">
+          <p class="tag">설계 관점</p>
+          <p>이중화와 VIP를 프로젝트마다 다시 그리면 녹취와 WAS의 분배 규칙이 은행마다 달라집니다. 농협의 서버 1·2, 녹취 Hash, WAS Round Robin은 우리은행과 같은 구성입니다. 그래서 인프라는 그대로 두고, 그 위에서 녹취 수신, DB 로직, 개발 배포만 새로 만들었습니다.</p>
+        </div>
         <div class="arch">
           <div class="arch-bar">
             <span>서버 1·2 이중화 · L4 VIP</span>
@@ -140,6 +144,10 @@
       <section id="netty">
         <div class="num">02</div>
         <h2>Netty 녹취 엔진과 연동 API</h2>
+        <div class="purpose">
+          <p class="tag">설계 관점</p>
+          <p>고객 RX와 상담원 TX는 같은 통화여도 패킷이 따로 들어옵니다. 음원마다 채널을 열면 라이선스가 두 배로 잡히고, 두 스트림을 다른 스레드가 고치면 순번과 종료 시점이 어긋납니다. 그래서 통화 키로 채널 하나에 모으고 라이선스는 그 채널만 세며, Hash VIP로 한 엔진의 이벤트 루프에 고정했습니다.</p>
+        </div>
         <p class="note">
           녹취는 <code>RTP</code>로 받습니다. <code>RTP</code>는 음성을 잘게 나눈 패킷이라, 순번과 시간이 붙어 있습니다.
           한 통화 안에서도 고객이 말한 소리와 상담원이 말한 소리는 섞여 오지 않습니다.
@@ -192,6 +200,10 @@
       <section id="jpa">
         <div class="num">03</div>
         <h2>PostgreSQL 함수 · 프로시저 약 20개를 JPA 서비스로 전환</h2>
+        <div class="purpose">
+          <p class="tag">설계 관점</p>
+          <p>PostgreSQL 프로시저는 안쪽 호출이 전부 바깥 트랜잭션 안에서 커밋됩니다. 자바에서 단계마다 트랜잭션을 열면 중간 성공이 남고, 같은 클래스에서 자기 메서드를 부르면 그 설정이 적용되지 않습니다. 그래서 경계는 진입점 하나에만 두고, 하위 프로시저는 별도 빈의 REQUIRED로 참여시켰습니다. 본 작업과 무관하게 남아야 하는 처리만 REQUIRES_NEW로 뺐습니다.</p>
+        </div>
         <p class="note">
           운영 DB가 <code>Tibero</code>로 바뀌면서 <code>PostgreSQL</code> 함수 · 프로시저를 그대로 쓸 수 없었습니다.
           워크플로우를 이루는 약 20개를 <code>JPA</code> 서비스 코드로 하나씩 옮겼습니다.
@@ -280,6 +292,10 @@
       <section id="cicd">
         <div class="num">04</div>
         <h2>개발망 Jenkins · Shell CI/CD</h2>
+        <div class="purpose">
+          <p class="tag">설계 관점</p>
+          <p>개발 서버마다 손으로 올리면 산출물이 갈라지고, 그 자동화를 운영까지 이으면 결재 전 빌드가 운영에 들어갑니다. 그래서 Jenkins와 Shell은 개발망에서 WAS와 녹취 엔진을 같은 산출물로 반영하는 데만 쓰고, 운영은 PCMS 결재 뒤 수동 배포로 남겼습니다.</p>
+        </div>
         <p class="note">CI/CD는 개발망에 구축했습니다. 개발 서버 안에서 <code>Jenkins</code>로 빌드하고, 서버마다 둔 <code>Shell</code>로 반영합니다. 운영망은 자동화하지 않았습니다.</p>
         <div class="timeline">
           <div class="tl-item mine">
